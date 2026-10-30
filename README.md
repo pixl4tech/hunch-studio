@@ -129,3 +129,14 @@ ENDPOINT
 SAMPLING
   default        {"temperature":1,"top_p":1}
 ```
+
+### Session usage
+
+Cumulative for this build session — not the context window:
+
+```
+SESSION — since Fri 05:09 AM
+
+  prompt tokens read   1,272,527   @ 483 tok/s   (89,602,204 reused)
+  tokens written         818,340   @ 42.1 tok/s
+```

@@ -129,7 +129,8 @@ export function SignOff() {
           </p>
           <p className="signoff__model mono">
             Made on DeepSeek V4.1 Flash 1017<br />
-            maya-deepseek/deepseek-v4.1-flash · Maya-S · reasoning max
+            maya-deepseek/deepseek-v4.1-flash · Maya-S · reasoning max<br />
+            1,272,527 tokens read · 818,340 written · 89.6M reused
           </p>
         </div>
         <div className="signoff__col">
