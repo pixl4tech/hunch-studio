@@ -1,0 +1,594 @@
+/* PLATE 03 — THE FUGUE */
+
+.fugue {
+  overflow: hidden;
+}
+.fugue .folio {
+  -webkit-text-stroke-color: rgba(238, 231, 215, 0.18);
+}
+.fugue__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.74fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: end;
+  border-top: 1px solid var(--rule);
+  padding-top: 22px;
+}
+.fugue__title {
+  margin-top: 20px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(44px, 8vw, 120px);
+  line-height: 0.8;
+  letter-spacing: -0.058em;
+  text-transform: uppercase;
+}
+.fugue__title em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+  color: var(--lime);
+  font-size: 1.04em;
+}
+.fugue__head-note {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 6px;
+}
+.fugue__head-note .lede {
+  max-width: 44ch;
+}
+.fugue__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  border-top: 1px solid var(--rule);
+  padding-top: 12px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* score */
+.fugue__score {
+  display: grid;
+  grid-template-columns: minmax(116px, 0.17fr) minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 30px);
+  margin-top: clamp(32px, 4vw, 52px);
+  border: 1px solid var(--rule);
+  background: rgba(0, 0, 0, 0.1);
+  padding: clamp(14px, 1.6vw, 22px) clamp(14px, 2vw, 26px) clamp(18px, 2vw, 26px);
+}
+.fugue__labels {
+  display: flex;
+  flex-direction: column;
+}
+.fugue__labels-head {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--rule);
+}
+.stave-label {
+  position: relative;
+  height: 64px;
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  grid-template-rows: auto auto;
+  align-content: center;
+  column-gap: 6px;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+  padding-right: 8px;
+  color: var(--muted);
+  transition: color 0.25s;
+}
+.stave-label:hover {
+  color: var(--bone);
+}
+.stave-label__roman {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1;
+  grid-row: span 2;
+  color: var(--muted);
+  transition: color 0.25s;
+}
+.stave-label__name {
+  font-family: var(--display);
+  font-size: clamp(13px, 1.25vw, 17px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--bone);
+  text-transform: uppercase;
+}
+.stave-label__weeks {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.stave-label__dot {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rule);
+  transform: translateY(-50%);
+  transition:
+    background-color 0.25s,
+    box-shadow 0.25s;
+}
+.stave-label.is-on {
+  color: var(--lime);
+}
+.stave-label.is-on .stave-label__roman {
+  color: var(--lime);
+}
+.stave-label.is-on .stave-label__dot {
+  background: var(--lime);
+  box-shadow: 0 0 10px var(--lime);
+}
+.stave-label.is-solo .stave-label__name {
+  color: var(--lime);
+}
+.fugue__labels-foot {
+  height: 42px;
+  display: flex;
+  align-items: flex-end;
+  font-size: 7px;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.fugue__timeline {
+  position: relative;
+  min-width: 0;
+  touch-action: pan-y;
+  cursor: ew-resize;
+}
+.fugue__ruler {
+  position: relative;
+  height: 42px;
+  border-bottom: 1px solid var(--rule);
+}
+.fugue__tick {
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  width: 1px;
+  background: var(--rule);
+  opacity: 0.5;
+}
+.fugue__tick.is-major {
+  background: rgba(238, 231, 215, 0.35);
+  opacity: 1;
+}
+.fugue__tick b {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.fugue__ruler-label {
+  position: absolute;
+  right: 0;
+  bottom: 6px;
+  font-size: 7px;
+  color: var(--muted);
+}
+.fugue__staves {
+  position: relative;
+}
+.stave-track {
+  position: relative;
+  height: 64px;
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
+}
+.stave-track__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(238, 231, 215, 0.13);
+}
+.stave-track__band {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: rgba(238, 231, 215, 0.03);
+  border-left: 1px solid rgba(238, 231, 215, 0.14);
+  border-right: 1px solid rgba(238, 231, 215, 0.14);
+  transition:
+    background-color 0.3s,
+    border-color 0.3s;
+}
+.stave-track.is-on .stave-track__band {
+  background: rgba(216, 255, 69, 0.07);
+  border-color: rgba(216, 255, 69, 0.45);
+}
+.fugue__note {
+  position: absolute;
+  height: 7px;
+  border-radius: 1px;
+  background: rgba(238, 231, 215, 0.5);
+  transform-origin: 0 50%;
+  transition:
+    background-color 0.3s,
+    transform 0.3s var(--snap),
+    box-shadow 0.3s;
+}
+.stave-track.is-on .fugue__note {
+  background: var(--lime);
+  box-shadow: 0 0 14px rgba(216, 255, 69, 0.35);
+}
+.stave-track.is-on .fugue__note:nth-child(odd) {
+  transform: scaleY(1.35);
+}
+.stave-track.is-solo {
+  background: rgba(216, 255, 69, 0.03);
+}
+
+.fugue__playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+.fugue__playhead-line {
+  position: absolute;
+  top: 40px;
+  bottom: 5px;
+  left: 0;
+  width: 1px;
+  background: var(--lime);
+  transform: translateX(-0.5px);
+  box-shadow: 0 0 12px rgba(216, 255, 69, 0.45);
+}
+.fugue__playhead-tag {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  transform: translateX(-50%);
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 4px 7px 3px;
+  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.fugue__playhead-tag small {
+  font-size: 6px;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+.fugue__playhead-tag::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 7px;
+  height: 7px;
+  background: var(--lime);
+  transform: translateX(-50%) rotate(45deg);
+}
+.fugue__playhead-foot {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  background: var(--lime);
+  transform: translate(-50%, 50%) rotate(45deg);
+}
+
+/* console */
+.fugue__console {
+  margin-top: 26px;
+  border: 1px solid var(--rule);
+  padding: clamp(16px, 2vw, 24px);
+  background: rgba(13, 12, 10, 0.08);
+}
+.fugue__console-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 8.5px;
+  color: var(--muted);
+}
+.fugue__console-head .mono {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.fugue__console-controls {
+  display: flex;
+  gap: 6px;
+}
+.fugue__play {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--lime);
+  padding: 6px 9px 5px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lime);
+  transition:
+    background-color 0.22s,
+    color 0.22s;
+}
+.fugue__play:hover {
+  background: rgba(216, 255, 69, 0.13);
+}
+.fugue__play.is-playing {
+  background: var(--lime);
+  color: var(--ink);
+}
+.fugue__play-ico {
+  font-size: 7px;
+  line-height: 1;
+  transform: translateY(0.5px);
+}
+.fugue__sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--rule);
+  padding: 6px 9px 5px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition:
+    background-color 0.25s,
+    color 0.25s;
+}
+.fugue__sound:hover {
+  color: var(--bone);
+  border-color: var(--muted);
+}
+.fugue__sound.is-on {
+  background: var(--lime);
+  color: var(--ink);
+  border-color: var(--lime);
+}
+.fugue__sound-led {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+}
+.fugue__sound.is-on .fugue__sound-led {
+  opacity: 1;
+}
+
+.fugue__program {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0 clamp(24px, 3vw, 48px);
+  padding-top: 6px;
+  min-height: 240px;
+}
+.movement {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 16px;
+  padding-block: clamp(18px, 2vw, 28px);
+  border-bottom: 1px solid var(--rule);
+  animation: movement-in 0.5s var(--ease) both;
+}
+@keyframes movement-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.movement__no {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 0.9;
+  color: var(--lime);
+  letter-spacing: -0.04em;
+}
+.movement__week {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.movement__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.movement__name {
+  font-family: var(--display);
+  font-size: clamp(26px, 2.4vw, 36px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  line-height: 0.9;
+}
+.movement__statement {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(19px, 1.6vw, 24px);
+  line-height: 1.25;
+  color: var(--lime);
+  max-width: 30ch;
+}
+.movement__detail {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: rgba(238, 231, 215, 0.76);
+  max-width: 52ch;
+}
+.movement__get {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--bone);
+  border-top: 1px solid var(--rule);
+  padding-top: 9px;
+  max-width: 54ch;
+}
+.movement__get .mono {
+  font-size: 7.5px;
+  color: var(--lime);
+  margin-right: 6px;
+}
+.fugue__quiet {
+  grid-column: 1 / -1;
+  padding-block: 36px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(22px, 2.2vw, 30px);
+  color: var(--bone);
+}
+.fugue__quiet span {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* foot */
+.fugue__foot {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr auto;
+  gap: clamp(20px, 4vw, 60px);
+  align-items: start;
+  margin-top: clamp(30px, 4vw, 48px);
+}
+.fugue__quote {
+  font-family: var(--display);
+  font-size: clamp(19px, 1.8vw, 26px);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  max-width: 30ch;
+}
+.fugue__quote em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.08em;
+  color: var(--lime);
+}
+.fugue__stamp {
+  color: var(--lime);
+  border-color: var(--lime);
+  outline-color: var(--lime);
+  font-size: 9px;
+  padding: 8px 10px 7px;
+  align-self: start;
+}
+
+@media (max-width: 1000px) {
+  .fugue__head {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .fugue__score {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .fugue__foot {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .fugue__score {
+    grid-template-columns: 74px minmax(0, 1fr);
+    padding-inline: 10px;
+  }
+  .stave-label {
+    grid-template-columns: 18px 1fr;
+    column-gap: 3px;
+  }
+  .stave-label__name {
+    font-size: 10px;
+  }
+  .stave-label__weeks {
+    font-size: 6px;
+    letter-spacing: 0.04em;
+  }
+  .stave-label__roman {
+    font-size: 11px;
+  }
+  .fugue__labels-head,
+  .fugue__ruler {
+    height: 34px;
+  }
+  .fugue__playhead-line {
+    top: 32px;
+  }
+  .fugue__playhead-tag {
+    top: 4px;
+  }
+  .stave-label,
+  .stave-track {
+    height: 58px;
+  }
+  .movement {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .movement__no {
+    font-size: 28px;
+  }
+  .fugue__console {
+    padding: 12px;
+  }
+  .fugue__program {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .stave-track__line {
+    opacity: 0.7;
+  }
+}
