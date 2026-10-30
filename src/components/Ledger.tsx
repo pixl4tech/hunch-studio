@@ -2,97 +2,8 @@ import type { CSSProperties } from "react";
 import { useVibe } from "../lib/vibe";
 import { scrollTo } from "../lib/scroll";
 import { playSfx } from "../lib/sfx";
-
-type Ticket = {
-  id: "sprint" | "build" | "date";
-  mode: string;
-  name: string;
-  duration: string;
-  price: string;
-  priceNote: string;
-  seat: string;
-  header: string;
-  headerFg: string;
-  brief: string;
-  includes: string[];
-  bestFor: string;
-  note: string;
-  tilt: number;
-  drop: number;
-};
-
-const TICKETS: Ticket[] = [
-  {
-    id: "sprint",
-    mode: "Steerage",
-    name: "The Sprint",
-    duration: "2 weeks",
-    price: "€18,000",
-    priceNote: "flat · excl. VAT",
-    seat: "04 · A",
-    header: "var(--orange)",
-    headerFg: "var(--ink)",
-    brief:
-      "One surface, one loop, one ship. For the product that is almost right and knows it.",
-    includes: [
-      "Discovery call + an eleven-word brief",
-      "One 72-hour loop, ugly on purpose",
-      "One shipped surface, polished by ear",
-      "Two weeks of aftercare, no ticket theatre",
-    ],
-    bestFor: "a product with a feeling that’s slightly off.",
-    note: "Standing room. Fast. No seatbelts.",
-    tilt: -1.6,
-    drop: 18,
-  },
-  {
-    id: "build",
-    mode: "Cabin",
-    name: "The Build",
-    duration: "6—10 weeks",
-    price: "€48,000+",
-    priceNote: "fixed scope · excl. VAT",
-    seat: "04 · B",
-    header: "var(--cobalt)",
-    headerFg: "var(--bone)",
-    brief:
-      "A whole product, from hunch to launch. For the blank page with a budget and a date.",
-    includes: [
-      "Everything in the sprint, plus:",
-      "Full interface: screens, states, words",
-      "Build: data, logic, plumbing",
-      "A motion and sound pass",
-      "Launch week + a thirty-day lull",
-    ],
-    bestFor: "a hunch, a blank page, and a date.",
-    note: "Window seat. Meals included. We bring the maps.",
-    tilt: 1.2,
-    drop: 0,
-  },
-  {
-    id: "date",
-    mode: "Bridge",
-    name: "The Standing Date",
-    duration: "monthly · 3 mo min",
-    price: "€14,000",
-    priceNote: "per month · excl. VAT",
-    seat: "04 · C",
-    header: "var(--ink)",
-    headerFg: "var(--bone)",
-    brief:
-      "A studio on a leash. For the team that wants taste on tap without a hiring round.",
-    includes: [
-      "Two days a week with us",
-      "A line that is always open",
-      "One loop per month, on anything",
-      "First refusal on the big things",
-    ],
-    bestFor: "you want taste on tap without the payroll.",
-    note: "The bridge. You can see where we’re going. We can see where you are.",
-    tilt: -1.1,
-    drop: 30,
-  },
-];
+import { TICKET_DATA, TICKET_IDS } from "../content/data";
+import { Rich, useI18n } from "../i18n";
 
 function Barcode({ n = 24 }: { n?: number }) {
   return (
@@ -111,8 +22,19 @@ function Barcode({ n = 24 }: { n?: number }) {
 }
 
 export function Ledger() {
+  const { c, fill, fmt } = useI18n();
   const { tier, setTier } = useVibe();
-  const selected = TICKETS.find((t) => t.id === tier) ?? null;
+  const tickets = TICKET_IDS.map((id) => {
+    const data = TICKET_DATA[id];
+    const copy = c.ledger.tickets[id];
+    return {
+      id,
+      ...data,
+      ...copy,
+      price: fmt.currency(data.price, data.plus ? "+" : ""),
+    };
+  });
+  const selected = tickets.find((t) => t.id === tier) ?? null;
 
   return (
     <section className="plate stock-bone ledger" id="ledger" aria-labelledby="ledger-title">
@@ -125,40 +47,40 @@ export function Ledger() {
           <div className="ledger__head-main">
             <p className="eyebrow">
               <span className="tick" />
-              <span className="lit">Plate 04</span>
+              <span className="lit">{c.ledger.eyebrow.plate}</span>
               <span className="sep">/</span>
-              <span>The Ledger</span>
+              <span>{c.ledger.eyebrow.section}</span>
               <span className="sep">/</span>
-              <span>Ways in</span>
+              <span>{c.ledger.eyebrow.ways}</span>
             </p>
             <h2 className="ledger__title" id="ledger-title">
-              Three ways
+              {c.ledger.title1}
               <br />
-              <em>in.</em>
+              <Rich text={c.ledger.title2} />
             </h2>
           </div>
           <div className="ledger__head-note">
             <p className="lede">
-              We sell time, not packages. No feature grids, no “contact us for pricing”. Three ways
-              to have us — same hands, same hours, same refusal to call it a solution.
+              {c.ledger.lede}
             </p>
             <div className="ledger__meta">
-              <span className="mono">Prices in EUR / excl. VAT</span>
-              <span className="mono">Deposit 50% / balance on ship</span>
-              <span className="mono">Seats are metaphorical</span>
+              <span className="mono">{c.ledger.meta.prices}</span>
+              <span className="mono">{c.ledger.meta.deposit}</span>
+              <span className="mono">{c.ledger.meta.seats}</span>
+              <span className="mono">{c.ledger.meta.models}</span>
             </div>
           </div>
         </header>
 
         <div className="ledger__desk">
           <div className="ledger__desk-head">
-            <span className="mono">Box office / open 09:00—18:00 CET</span>
-            <span className="mono">Ticket book Nº 04 / three stubs</span>
-            <span className="mono">Click a ticket to stamp it</span>
+            <span className="mono">{c.ledger.desk.open}</span>
+            <span className="mono">{c.ledger.desk.book}</span>
+            <span className="mono">{c.ledger.desk.hint}</span>
           </div>
 
           <div className="ledger__tickets">
-            {TICKETS.map((t) => {
+            {tickets.map((t) => {
               const isSelected = tier === t.id;
               return (
                 <article
@@ -180,13 +102,18 @@ export function Ledger() {
                   role="button"
                   tabIndex={0}
                   aria-pressed={isSelected}
-                  aria-label={`${t.mode}, ${t.name}, ${t.duration}, ${t.price}. Select this ticket.`}
-                  data-cursor={isSelected ? "UNSTAMP" : "STAMP IT"}
+                  aria-label={fill(c.ledger.ticket.aria, {
+                    mode: t.mode,
+                    name: t.name,
+                    duration: t.duration,
+                    price: t.price,
+                  })}
+                  data-cursor={isSelected ? c.chrome.cursor.unstamp : c.chrome.cursor.stampIt}
                 >
                   <div className="ticket__main">
                     <div className="ticket__head" style={{ background: t.header, color: t.headerFg }}>
                       <span>{t.mode}</span>
-                      <span>Seat {t.seat}</span>
+                      <span>{fill(c.ledger.ticket.seat, { seat: t.seat })}</span>
                     </div>
                     <div className="ticket__body">
                       <p className="ticket__kicker mono">{t.mode} / {t.duration}</p>
@@ -205,22 +132,22 @@ export function Ledger() {
                         ))}
                       </ul>
                       <p className="ticket__best">
-                        <span className="mono">Best for /</span> {t.bestFor}
+                        <span className="mono">{c.ledger.ticket.bestForLabel}</span> {t.bestFor}
                       </p>
                       <p className="ticket__note">{t.note}</p>
                     </div>
                     <div className="ticket__foot">
-                      <span className="mono">Transferable · non-refundable</span>
+                      <span className="mono">{c.ledger.ticket.transferable}</span>
                       <span className="mono">HUNCH / 03</span>
                     </div>
                     <div className="ticket__stamp" aria-hidden="true">
-                      Admitted
+                      {c.ledger.ticket.admitted}
                     </div>
                   </div>
 
                   <div className="ticket__stub">
                     <span className="ticket__stub-cut" aria-hidden="true" />
-                    <span className="ticket__vertical">Hunch · Admit one</span>
+                    <span className="ticket__vertical">{c.ledger.ticket.vertical}</span>
                     <Barcode n={18} />
                     <span className="ticket__seat">{t.seat}</span>
                     <span className="ticket__arrow" aria-hidden="true">→</span>
@@ -231,7 +158,7 @@ export function Ledger() {
           </div>
 
           <div className="ledger__summary" aria-live="polite">
-            <span className="ledger__summary-label mono">Selected ticket</span>
+            <span className="ledger__summary-label mono">{c.ledger.summary.label}</span>
             {selected ? (
               <>
                 <span className="ledger__summary-value">
@@ -246,16 +173,16 @@ export function Ledger() {
                   data-sfx="page"
                   onClick={() => scrollTo("#bench")}
                 >
-                  Take this ticket <span className="arw">↗</span>
+                  {c.ledger.summary.take} <span className="arw">↗</span>
                 </button>
               </>
             ) : (
               <>
                 <span className="ledger__summary-value ledger__summary-value--empty">
-                  None. The box office is open.
+                  {c.ledger.summary.empty}
                 </span>
                 <span className="ledger__summary-meta mono">
-                  Pick a stub above — the stamp is real, the seat is a metaphor.
+                  {c.ledger.summary.emptyMeta}
                 </span>
               </>
             )}
@@ -264,14 +191,12 @@ export function Ledger() {
 
         <div className="ledger__foot">
           <p className="ledger__terms">
-            Tickets are transferable. Deposits are 50%. Refunds are not. Invoices are boring on
-            purpose.
+            {c.ledger.foot.terms}
           </p>
           <p className="footnote">
-            Payment plans exist. So does barter, occasionally, if it’s interesting. We have never used
-            the word “synergy” in a deliverable.
+            {c.ledger.foot.footnote}
           </p>
-          <span className="stamp ledger__stamp">Prices are real</span>
+          <span className="stamp ledger__stamp">{c.ledger.foot.stamp}</span>
         </div>
       </div>
     </section>

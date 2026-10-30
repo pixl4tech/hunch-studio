@@ -7,79 +7,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { scrollTo } from "../lib/scroll";
-
-type Jack = { id: string; label: string; sub: string };
-
-const NEEDS: Jack[] = [
-  { id: "return", label: "A Reason to Return", sub: "retention" },
-  { id: "path", label: "A Shorter Path", sub: "friction" },
-  { id: "pulse", label: "A Pulse", sub: "emotion" },
-  { id: "life", label: "A Second Life", sub: "reuse" },
-];
-
-const SYSTEMS: Jack[] = [
-  { id: "interface", label: "Interface", sub: "screens · states · words" },
-  { id: "motion", label: "Motion", sub: "weight · timing · give" },
-  { id: "sound", label: "Sound", sub: "tones · silence · cues" },
-  { id: "systems", label: "Systems", sub: "data · logic · plumbing" },
-];
-
-const NEED_IDS = NEEDS.map((n) => n.id);
-const SYSTEM_IDS = SYSTEMS.map((s) => s.id);
-const NEED_COLOR: Record<string, string> = {
-  return: "#0d0c0a",
-  path: "#2238f5",
-  pulse: "#ff4d18",
-  life: "#7a5cff",
-};
-
-const SPEC: Record<string, string> = {
-  "return:interface":
-    "a reason to come back that isn’t a notification: one small, earned change each morning.",
-  "return:motion": "a landing that rewards the second visit — the page remembers where you left.",
-  "return:sound": "a three-note motif only returning visitors hear. they will tell someone.",
-  "return:systems": "a memory that stays useful: saved state, quiet continuity, no account nag.",
-  "path:interface": "a checkout that fits in one thumb, and a back button that never lies.",
-  "path:motion": "transitions that carry context instead of decorating it. nothing spins to say hello.",
-  "path:sound": "silence where the old flow used to beep. one confirmation you can feel.",
-  "path:systems": "the shortest possible pipe: fewer steps, fewer tables, fewer places to lose someone.",
-  "pulse:interface": "a surface with a temperature: paper, ink, one loud thing at a time.",
-  "pulse:motion": "weight and give — everything lands like it has a body.",
-  "pulse:sound": "a room tone and two cues. sound is the cheapest emotion there is.",
-  "pulse:systems": "state changes that feel like events, not refreshes.",
-  "life:interface": "a second surface for the same product: admin, archive, after-hours.",
-  "life:motion": "reuse as rhythm — old screens returning at the right tempo, not as clutter.",
-  "life:sound": "an archive that sounds alive when someone touches it.",
-  "life:systems": "one source of truth, many costumes: content that outlives the campaign.",
-};
-
-const PRESETS: { name: string; conns: [string, string][] }[] = [
-  {
-    name: "The House",
-    conns: [
-      ["return", "interface"],
-      ["path", "motion"],
-      ["pulse", "sound"],
-      ["life", "systems"],
-    ],
-  },
-  {
-    name: "The Rescue",
-    conns: [
-      ["path", "interface"],
-      ["pulse", "motion"],
-      ["life", "systems"],
-    ],
-  },
-  {
-    name: "The Showpiece",
-    conns: [
-      ["pulse", "motion"],
-      ["pulse", "sound"],
-      ["return", "interface"],
-    ],
-  },
-];
+import { NEED_COLOR, NEED_IDS, PRESETS, SYSTEM_IDS, type NeedId } from "../content/data";
+import { Rich, useI18n } from "../i18n";
 
 type Conn = { from: string; to: string };
 type Vec = { x: number; y: number };
@@ -91,6 +20,9 @@ function cablePath(a: Vec, b: Vec) {
 }
 
 export function PatchBay() {
+  const { c, fill } = useI18n();
+  const needs = NEED_IDS.map((id) => ({ id, ...c.patch.needs[id] }));
+  const systems = SYSTEM_IDS.map((id) => ({ id, ...c.patch.systems[id] }));
   const boardRef = useRef<HTMLDivElement>(null);
   const socketRefs = useRef(new Map<string, HTMLElement>());
   const [pos, setPos] = useState<Record<string, Vec>>({});
@@ -158,7 +90,7 @@ export function PatchBay() {
       let best: string | null = null;
       let bestD = 84;
       for (const [id, p] of Object.entries(pos)) {
-        const side = NEED_IDS.includes(id) ? "in" : "out";
+        const side = (NEED_IDS as string[]).includes(id) ? "in" : "out";
         if (side === g.side) continue;
         const d = Math.hypot(p.x - x, p.y - y);
         if (d < bestD) {
@@ -203,8 +135,8 @@ export function PatchBay() {
   }, [pos]);
 
   const connect = (a: string, b: string) => {
-    const aIn = NEED_IDS.includes(a);
-    const bIn = NEED_IDS.includes(b);
+    const aIn = (NEED_IDS as string[]).includes(a);
+    const bIn = (NEED_IDS as string[]).includes(b);
     let need = "";
     let sys = "";
     if (aIn && !bIn) {
@@ -220,7 +152,7 @@ export function PatchBay() {
   };
 
   const onJackDown = (e: ReactPointerEvent, id: string) => {
-    const side = NEED_IDS.includes(id) ? "in" : "out";
+    const side = (NEED_IDS as string[]).includes(id) ? "in" : "out";
     gesture.current = { from: id, side, sx: e.clientX, sy: e.clientY, moved: false };
     const board = boardRef.current;
     if (board) {
@@ -240,8 +172,8 @@ export function PatchBay() {
         setArmed(null);
         return;
       }
-      const armedIn = NEED_IDS.includes(armed);
-      const thisIn = NEED_IDS.includes(id);
+      const armedIn = (NEED_IDS as string[]).includes(armed);
+      const thisIn = (NEED_IDS as string[]).includes(id);
       if (armedIn !== thisIn) {
         connect(armed, id);
         setArmed(null);
@@ -259,21 +191,21 @@ export function PatchBay() {
 
   const spec = useMemo(
     () =>
-      conns.map((c) => ({
-        ...c,
-        need: NEEDS.find((n) => n.id === c.from)!,
-        sys: SYSTEMS.find((s) => s.id === c.to)!,
-        line: SPEC[`${c.from}:${c.to}`],
+      conns.map((conn) => ({
+        ...conn,
+        need: needs.find((n) => n.id === conn.from)!,
+        sys: systems.find((s) => s.id === conn.to)!,
+        line: (c.patch.specs as Record<string, string>)[`${conn.from}:${conn.to}`],
       })),
-    [conns],
+    [conns, needs, systems, c],
   );
 
   const specText =
     spec.length === 0
-      ? "HUNCH / patch sheet / no cables connected."
-      : `HUNCH / patch sheet\n\n${spec
+      ? c.patch.specText.empty
+      : `${c.patch.specText.header}\n\n${spec
           .map((s) => `${s.need.label} → ${s.sys.label}\n  ${s.line}`)
-          .join("\n\n")}\n\nAll systems optional. All feelings load-bearing.`;
+          .join("\n\n")}\n\n${c.patch.specText.footer}`;
 
   const copySpec = async () => {
     try {
@@ -300,45 +232,44 @@ export function PatchBay() {
           <div>
             <p className="eyebrow">
               <span className="tick" />
-              <span className="lit">Plate 02</span>
+              <span className="lit">{c.patch.eyebrow.plate}</span>
               <span className="sep">/</span>
-              <span>The Patch Bay</span>
+              <span>{c.patch.eyebrow.section}</span>
               <span className="sep">/</span>
-              <span>Capabilities</span>
+              <span>{c.patch.eyebrow.caps}</span>
             </p>
             <h2 className="patch__title" id="patch-title">
-              Everything is
-              <br />a <em>cable.</em>
+              {c.patch.title1}
+              <br /><Rich text={c.patch.title2} />
             </h2>
           </div>
           <div className="patch__head-note">
             <p className="lede">
-              A product is a connection between a feeling and a system. Pull a cable and read the
-              spec. If the patch is wrong, the spec is wrong — that’s the point.
+              {c.patch.lede}
             </p>
             <div className="patch__head-meta">
-              <span className="stamp">Feel in / feel out</span>
+              <span className="stamp">{c.patch.stamp}</span>
               <p className="footnote">
-                We do this on a call, with worse handwriting. 4 in · 4 out · 16 possible paths.
+                {c.patch.footnote}
               </p>
             </div>
           </div>
         </header>
 
-        <div className="patch__controls" role="group" aria-label="Patch presets">
-          <span className="mono patch__controls-label">Presets</span>
+        <div className="patch__controls" role="group" aria-label={c.patch.presets}>
+          <span className="mono patch__controls-label">{c.patch.presets}</span>
           {PRESETS.map((p) => (
             <button
-              key={p.name}
+              key={p.id}
               type="button"
               className="patch__preset"
               data-sfx="relay"
               onClick={() => {
-                setConns(p.conns.map(([from, to]) => ({ from, to })));
+                setConns(p.conns.map(([from, to]) => ({ from: String(from), to: String(to) })));
                 setArmed(null);
               }}
             >
-              {p.name}
+              {c.patch.presetsList[p.id]}
             </button>
           ))}
           <button
@@ -351,10 +282,10 @@ export function PatchBay() {
             }}
             disabled={conns.length === 0}
           >
-            Pull everything
+            {c.patch.clear}
           </button>
           <span className="patch__count mono">
-            {conns.length}/16 <span>cables</span>
+            {fill(c.patch.cables, { count: conns.length }).replace(`${conns.length}/16 `, `${conns.length}/16 `)}
           </span>
         </div>
 
@@ -369,21 +300,21 @@ export function PatchBay() {
           <span className="patch__screw patch__screw--br" aria-hidden="true" />
 
           <div className="patch__board-label patch__board-label--in mono">
-            <span className="dot-live" /> Need / in
+            <span className="dot-live" /> {c.patch.board.need}
           </div>
           <div className="patch__board-label patch__board-label--out mono">
-            System / out <span className="dot-live" />
+            {c.patch.board.system} <span className="dot-live" />
           </div>
 
           <div className="patch__center" aria-hidden="true">
-            <span className="patch__flow mono">feel → system</span>
-            <span className="patch__watermark">patch</span>
-            <span className="patch__flow patch__flow--bottom mono">no. 02 / live</span>
+            <span className="patch__flow mono">{c.patch.board.flowTop}</span>
+            <span className="patch__watermark">{c.patch.board.watermark}</span>
+            <span className="patch__flow patch__flow--bottom mono">{c.patch.board.flowBottom}</span>
           </div>
 
           <div className="patch__cols">
             <div className="patch__col patch__col--in">
-              {NEEDS.map((n, i) => {
+              {needs.map((n, i) => {
                 const connected = conns.some((c) => c.from === n.id);
                 return (
                   <button
@@ -395,10 +326,10 @@ export function PatchBay() {
                     data-jack={n.id}
                     data-sfx="plug"
                     aria-pressed={armed === n.id || connected}
-                    aria-label={`Need: ${n.label}. ${connected ? "Connected." : "Select to patch."}`}
+                    aria-label={fill(c.patch.board.needAria, { label: n.label, state: connected ? c.patch.board.connected : c.patch.board.select })}
                     onPointerDown={(e) => onJackDown(e, n.id)}
                     onClick={() => onJackClick(n.id)}
-                    style={{ "--cable": NEED_COLOR[n.id] } as CSSProperties}
+                    style={{ "--cable": NEED_COLOR[n.id as NeedId] } as CSSProperties}
                   >
                     <span className="jack__meta">
                       <span className="jack__name">{n.label}</span>
@@ -420,7 +351,7 @@ export function PatchBay() {
             </div>
 
             <div className="patch__col patch__col--out">
-              {SYSTEMS.map((s, i) => {
+              {systems.map((s, i) => {
                 const connected = conns.some((c) => c.to === s.id);
                 return (
                   <button
@@ -432,7 +363,7 @@ export function PatchBay() {
                     data-jack={s.id}
                     data-sfx="plug"
                     aria-pressed={armed === s.id || connected}
-                    aria-label={`System: ${s.label}. ${connected ? "Connected." : "Select to patch."}`}
+                    aria-label={fill(c.patch.board.systemAria, { label: s.label, state: connected ? c.patch.board.connected : c.patch.board.select })}
                     onPointerDown={(e) => onJackDown(e, s.id)}
                     onClick={() => onJackClick(s.id)}
                     style={{ "--cable": "#0d0c0a" } as CSSProperties}
@@ -465,22 +396,22 @@ export function PatchBay() {
               height={size.h}
               aria-hidden="true"
             >
-              {conns.map((c, i) => {
-                const a = pos[c.from];
-                const b = pos[c.to];
+              {conns.map((conn, i) => {
+                const a = pos[conn.from];
+                const b = pos[conn.to];
                 if (!a || !b) return null;
                 const d = cablePath(a, b);
-                const color = NEED_COLOR[c.from];
+                const color = NEED_COLOR[conn.from as NeedId];
                 return (
-                  <g key={`${c.from}-${c.to}-${i}`} className="cable">
+                  <g key={`${conn.from}-${conn.to}-${i}`} className="cable">
                     <path d={d} className="cable__shadow" />
                     <path d={d} className="cable__line" style={{ stroke: color }} />
                     <path
                       d={d}
                       className="cable__hit"
                       data-sfx="plug"
-                      onClick={() => removeCable(c)}
-                      data-cursor="CUT THE CABLE"
+                      onClick={() => removeCable(conn)}
+                      data-cursor={c.chrome.cursor.cutCable}
                     />
                     <circle cx={a.x} cy={a.y} r={7} fill={color} stroke="#0d0c0a" strokeWidth={1.2} />
                     <circle cx={a.x} cy={a.y} r={2.3} fill="#f3ecdf" opacity={0.8} />
@@ -494,9 +425,9 @@ export function PatchBay() {
                   <path
                     d={cablePath(pos[ghostFrom!], ghost)}
                     className="cable__ghost"
-                    style={{ stroke: NEED_COLOR[ghostFrom!] }}
+                    style={{ stroke: NEED_COLOR[ghostFrom! as NeedId] }}
                   />
-                  <circle cx={ghost.x} cy={ghost.y} r={5} fill={NEED_COLOR[ghostFrom!]} opacity={0.7} />
+                  <circle cx={ghost.x} cy={ghost.y} r={5} fill={NEED_COLOR[ghostFrom! as NeedId]} opacity={0.7} />
                 </g>
               )}
             </svg>
@@ -504,27 +435,27 @@ export function PatchBay() {
 
           {armed && (
             <div className="patch__armed-hint mono" aria-live="polite">
-              {NEED_IDS.includes(armed)
-                ? `${NEEDS.find((n) => n.id === armed)?.label} armed — now pick a system`
-                : `${SYSTEMS.find((s) => s.id === armed)?.label} armed — now pick a need`}
+              {NEED_IDS.includes(armed as NeedId)
+                ? fill(c.patch.board.armedNeed, { label: needs.find((n) => n.id === armed)?.label ?? "" })
+                : fill(c.patch.board.armedSystem, { label: systems.find((s) => s.id === armed)?.label ?? "" })}
             </div>
           )}
         </div>
 
         <p className="sr-only" aria-live="polite">
-          {conns.length === 0 ? "No cables connected" : `${conns.length} cables connected`}
+          {conns.length === 0 ? c.patch.specText.empty : fill(c.patch.cables, { count: conns.length })}
         </p>
 
         <div className="patch__output">
           <div className="patch__receipt">
             <div className="patch__receipt-head">
-              <span className="mono">Output / spec sheet</span>
-              <span className="mono">Form PB-02</span>
+              <span className="mono">{c.patch.receipt.head}</span>
+              <span className="mono">{c.patch.receipt.form}</span>
             </div>
             {spec.length === 0 ? (
               <p className="patch__empty">
-                No cables. The board is quiet.
-                <span> Drag from a need to a system, or click one socket then the other.</span>
+                {c.patch.receipt.empty}
+                <span> {c.patch.receipt.emptyHint}</span>
               </p>
             ) : (
               <ol className="spec">
@@ -544,8 +475,8 @@ export function PatchBay() {
               </ol>
             )}
             <div className="patch__receipt-foot">
-              <span className="mono">Patch / {conns.length ? `${String(conns.length * 7 + 11).padStart(4, "0")}` : "——"}</span>
-              <span className="mono">Feeling is load-bearing</span>
+              <span className="mono">{c.patch.receipt.patch} {conns.length ? `${String(conns.length * 7 + 11).padStart(4, "0")}` : "——"}</span>
+              <span className="mono">{c.patch.receipt.load}</span>
               <span className="patch__bars" aria-hidden="true">
                 <i />
                 <i />
@@ -558,22 +489,21 @@ export function PatchBay() {
 
           <aside className="patch__notes">
             <p className="patch__notes-quote">
-              All systems are optional. <em>All feelings are load-bearing.</em>
+              <Rich text={c.patch.receipt.noteQuote} />
             </p>
             <p className="footnote">
-              The spec is generated from the cable, not from a deck. It is also how we quote. If a
-              line doesn’t make you feel something, cut the cable.
+              {c.patch.receipt.noteFoot}
             </p>
             <div className="patch__actions">
               <button type="button" className="btn btn--fill btn--sm" data-sfx="paper" onClick={takeToBench}>
-                Take it to the bench <span className="arw">↗</span>
+                {c.patch.receipt.take} <span className="arw">↗</span>
               </button>
               <button type="button" className="btn btn--ghost btn--sm" data-sfx="success" onClick={copySpec}>
-                {copied ? "Copied ✓" : "Copy the spec"}
+                {copied ? c.common.copied : c.patch.receipt.copy}
               </button>
             </div>
             <p className="mono patch__keys">
-              Keyboard: tab to a socket, enter to arm it, enter on the other side to patch.
+              {c.patch.receipt.keys}
             </p>
           </aside>
         </div>

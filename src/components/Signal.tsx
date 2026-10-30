@@ -4,7 +4,8 @@ import { Marquee } from "./chrome";
 import { onTick } from "../lib/ticker";
 import { useNow } from "../lib/hooks";
 import { scrollTo } from "../lib/scroll";
-import { PLATES } from "../lib/plates";
+import { PLATE_DATA, PLATE_ORDER } from "../content/data";
+import { Rich, useI18n } from "../i18n";
 
 function Seismograph() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -102,44 +103,37 @@ function InkLine({
 }
 
 function Masthead() {
-  const time = useNow("Europe/Amsterdam");
+  const { c, fmt } = useI18n();
+  const time = useNow("Europe/Amsterdam", fmt.intl);
   return (
     <header className="masthead">
       <div className="masthead__row">
         <div className="masthead__brand">
           HUNCH
           <span className="reg">®</span>
-          <span className="masthead__sub">a studio for software with a pulse</span>
+          <span className="masthead__sub">{c.signal.masthead.tagline}</span>
         </div>
-        <span className="masthead__line">Issue 03 — The Feeling Issue — Winter</span>
-        <span className="masthead__line">Rotterdam / 51.92°N</span>
+        <span className="masthead__line">{c.signal.masthead.issue}</span>
+        <span className="masthead__line">{c.signal.masthead.location}</span>
       </div>
       <div className="masthead__strip">
         <span>
-          <b>Two desks</b> · One kettle · No decks
+          <Rich text={c.signal.masthead.strip1} />
         </span>
-        <span>Est. 2023 · Independent since lunch</span>
+        <span>{c.signal.masthead.strip2}</span>
         <span className="masthead__clock">
-          Studio time <b>{time}</b>
-          <span className="masthead__cet"> CET</span>
+          {c.signal.masthead.studioTime} <b>{time}</b>
+          <span className="masthead__cet"> {c.signal.masthead.cet}</span>
         </span>
       </div>
     </header>
   );
 }
 
-const ticker = [
-  "a booking flow for a barber who hates forms",
-  "a museum guide that remembers your name",
-  "an internal tool with the vibe of a well-kept notebook",
-  "a checkout that ends in one thumb",
-  "a homepage that doesn’t shout",
-  "a settings panel you can actually finish",
-  "a font with a limp",
-  "a bug that only happens on Tuesdays",
-];
+
 
 export function Signal() {
+  const { c, fill } = useI18n();
   return (
     <section className="plate stock-ink signal" id="signal" aria-labelledby="signal-title">
       <div className="shell">
@@ -150,11 +144,11 @@ export function Signal() {
             <div className="signal__meta">
               <p className="eyebrow">
                 <span className="tick" />
-                <span className="lit">Plate 00</span>
+                <span className="lit">{c.signal.eyebrow.plate}</span>
                 <span className="sep">/</span>
-                <span>The Signal</span>
+                <span>{c.signal.eyebrow.section}</span>
                 <span className="sep">/</span>
-                <span>Live</span>
+                <span>{c.signal.eyebrow.live}</span>
               </p>
               <div className="signal__scope">
                 <Seismograph />
@@ -164,10 +158,10 @@ export function Signal() {
 
             <h1 className="signal__h1" id="signal-title">
               <InkLine index={0}>
-                <span className="word">SOFTWARE</span>
+                <span className="word">{c.signal.titleTop}</span>
               </InkLine>
               <InkLine index={1} className="ink-line--two">
-                <span className="serif by">by</span> <span className="word">FEEL</span>
+                <span className="serif by">{c.signal.titleBy}</span> <span className="word">{c.signal.titleBottom}</span>
                 <span className="period">.</span>
               </InkLine>
             </h1>
@@ -175,31 +169,31 @@ export function Signal() {
             <div className="signal__under">
               <p className="mono signal__micro">
                 <span className="dot-live" />
-                Accepting one build for February · Two desks · Zero decks
+                {c.signal.micro}
               </p>
               <button type="button" className="signal__inline" data-sfx="page" onClick={() => scrollTo("#bench")}>
-                Start a hunch <span aria-hidden="true">↗</span>
+                {c.signal.start} <span aria-hidden="true">↗</span>
               </button>
             </div>
 
-            <nav className="contents" aria-label="Contents">
+            <nav className="contents" aria-label={c.signal.contents.aria}>
               <div className="contents__label">
-                <span>Contents</span>
-                <span>Eight plates / read in any order</span>
+                <span>{c.signal.contents.label}</span>
+                <span>{c.signal.contents.note}</span>
               </div>
-              {PLATES.map((p, i) => (
+              {PLATE_ORDER.map((id, i) => (
                 <button
-                  key={p.id}
+                  key={id}
                   type="button"
                   className="contents__row"
                   data-sfx="tick"
                   aria-current={i === 0}
-                  onClick={() => scrollTo(`#${p.id}`)}
+                  onClick={() => scrollTo(`#${id}`)}
                 >
-                  <span className="contents__no">{p.no}</span>
-                  <span className="contents__name">{p.label}</span>
+                  <span className="contents__no">{PLATE_DATA[id].no}</span>
+                  <span className="contents__name">{c.plates[id].label}</span>
                   <span className="contents__dots" aria-hidden="true" />
-                  <span className="contents__note">{p.note}</span>
+                  <span className="contents__note">{c.plates[id].note}</span>
                 </button>
               ))}
             </nav>
@@ -212,19 +206,15 @@ export function Signal() {
 
         <div className="signal__lower">
           <p className="lede signal__lede">
-            HUNCH is a two-person studio for products that <em>feel like something.</em> We start
-            with the feeling in the room, then build the smallest thing that produces it.
+            <Rich text={c.signal.lede} />
           </p>
 
           <div className="signal__col">
             <p className="body-copy">
-              Most software is assembled. Ours is tuned — fewer screens, better seams, a sound where
-              you didn’t expect one, copy that sounds like a person at 11pm.{" "}
-              <strong>If a feature doesn’t change how the thing feels, we don’t ship the feature.</strong>
+              <Rich text={c.signal.body} />
             </p>
             <p className="footnote">
-              We are not a platform. We are a place. You can tell the difference by how long people
-              stay.
+              {c.signal.footnote}
             </p>
           </div>
 
@@ -234,66 +224,45 @@ export function Signal() {
               className="btn btn--fill"
               data-sfx="page"
               onClick={() => scrollTo("#bench")}
-              data-cursor="OPEN A LINE"
+              data-cursor={c.chrome.cursor.openLine}
             >
-              Send us a hunch <span className="arw">↗</span>
+              {c.signal.cta1} <span className="arw">↗</span>
             </button>
             <button
               type="button"
               className="btn btn--ghost"
               data-sfx="tick"
               onClick={() => scrollTo("#bin")}
-              data-cursor="EVIDENCE"
+              data-cursor={c.chrome.cursor.evidence}
             >
-              Open the bin <span className="arw">↓</span>
+              {c.signal.cta2} <span className="arw">↓</span>
             </button>
             <div className="signal__stamp-wrap">
-              <span className="stamp">Open for one good hunch</span>
+              <span className="stamp">{c.signal.stamp}</span>
             </div>
           </div>
         </div>
 
         <div className="readouts">
-          <div className="readout">
-            <span className="readout__label">
-              <span className="dot-live" /> Current obsession
-            </span>
-            <span className="readout__value">
-              the sound of a door
-              <small>recorded on a Tuesday, 04:12</small>
-            </span>
-          </div>
-          <div className="readout">
-            <span className="readout__label">Next intake</span>
-            <span className="readout__value">
-              February — 2 slots
-              <small>one sprint, one build</small>
-            </span>
-          </div>
-          <div className="readout">
-            <span className="readout__label">Average first loop</span>
-            <span className="readout__value">
-              72 hours
-              <small>brief to something you can click</small>
-            </span>
-          </div>
-          <div className="readout">
-            <span className="readout__label">Kettle</span>
-            <span className="readout__value">
-              on
-              <small>since 08:12, no complaints</small>
-            </span>
-          </div>
+          {c.signal.readouts.map((r) => (
+            <div className="readout" key={r.label}>
+              <span className="readout__label">{r.label}</span>
+              <span className="readout__value">
+                {r.value}
+                <small>{r.small}</small>
+              </span>
+            </div>
+          ))}
         </div>
 
         <span className="marginalia signal__marginalia" aria-hidden="true">
-          The brief is usually wrong
+          {c.signal.marginalia}
         </span>
       </div>
 
       <div className="signal__ticker">
-        <Marquee items={ticker} />
-        <span className="signal__ticker-tag mono">NOW IN THE STUDIO</span>
+        <Marquee items={c.signal.ticker} />
+        <span className="signal__ticker-tag mono">{c.signal.tickerTag}</span>
       </div>
     </section>
   );

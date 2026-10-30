@@ -3,6 +3,7 @@ import { onTick } from "../lib/ticker";
 import { clamp, prefersReducedMotion } from "../lib/util";
 import { scrollTo } from "../lib/scroll";
 import { useNow } from "../lib/hooks";
+import { useI18n } from "../i18n";
 
 /* ------------------------------------------------------------------ */
 /* Grain — generated once, laid over everything                        */
@@ -253,13 +254,14 @@ export function Boot({ onDone, onReveal }: { onDone: () => void; onReveal?: () =
     };
   }, [finish]);
 
+  const { c } = useI18n();
   return (
     <div className="boot" data-leaving={leaving} aria-hidden={leaving}>
       <div className="boot__top">
         <div>
           <div className="boot__brand">HUNCH®</div>
           <div className="mono" style={{ marginTop: 8, color: "var(--muted-dark)" }}>
-            PRINTING · ISSUE 03
+            {c.chrome.boot.printing}
           </div>
         </div>
         <div className="boot__marks" aria-hidden="true">
@@ -275,19 +277,19 @@ export function Boot({ onDone, onReveal }: { onDone: () => void; onReveal?: () =
           <small>%</small>
         </div>
         <div className="boot__status">
-          <span>Warming the ink</span>
+          <span>{c.chrome.boot.warming}</span>
           <div className="boot__bar">
             <i style={{ width: `${progress}%` }} />
           </div>
-          <span>3 inks / bone stock</span>
+          <span>{c.chrome.boot.inks}</span>
         </div>
       </div>
 
       <div className="boot__bottom">
-        <span>Press Nº 03 · Two desks · One kettle</span>
-        <span>Sound off. Cursor on.</span>
+        <span>{c.chrome.boot.press}</span>
+        <span>{c.chrome.boot.soundOff}</span>
         <button className="boot__skip" type="button" data-sfx="whoosh" onClick={finish}>
-          Skip the ceremony ↗
+          {c.chrome.boot.skip}
         </button>
       </div>
     </div>
@@ -349,7 +351,8 @@ export function Dock({
   const dockRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLDivElement>(null);
   const [panel, setPanel] = useState(false);
-  const time = useNow("Europe/Amsterdam");
+  const { c, fmt, locale, setLocale, fill } = useI18n();
+  const time = useNow("Europe/Amsterdam", fmt.intl);
 
   useEffect(() => {
     if (!panel) return;
@@ -398,22 +401,22 @@ export function Dock({
   return (
     <>
       <div className="dock__progress" aria-hidden="true" />
-      <nav className="dock" ref={dockRef} aria-label="Plates">
+      <nav className="dock" ref={dockRef} aria-label={c.chrome.dock.plates}>
         <div className="dock__cell dock__id">
           <span className="dot" />
           <b>HUNCH</b>
           <span className="dock__cell--hide-sm" style={{ opacity: 0.55 }}>
-            FM 87.6
+            {c.chrome.dock.fm}
           </span>
         </div>
         <div className="dock__cell dock__cell--grow">
           <div className="dock__plate" key={current.id}>
-            <span className="n">PL.{current.no}</span>
+            <span className="n">{c.chrome.dock.plateNo}{current.no}</span>
             <span>{current.label}</span>
           </div>
         </div>
         <div className="dock__cell dock__cell--hide-sm">
-          <span>ROT {time}</span>
+          <span>{c.chrome.dock.rot} {time}</span>
         </div>
         <div className="dock__plates">
           {plates.map((p, i) => (
@@ -423,7 +426,7 @@ export function Dock({
               className="dock__tick"
               data-sfx="tick"
               aria-current={i === active}
-              aria-label={`Plate ${p.no}: ${p.label}`}
+              aria-label={fill(c.chrome.dock.plateAria, { no: p.no, label: p.label })}
               onClick={() => scrollTo(`#${p.id}`)}
             >
               {p.no}
@@ -434,18 +437,18 @@ export function Dock({
           <button
             type="button"
             data-sfx="page"
-            aria-label="Previous plate"
+            aria-label={c.chrome.dock.previous}
             onClick={() => scrollTo(`#${plates[(active - 1 + plates.length) % plates.length].id}`)}
           >
             ←
           </button>
           <span className="mono">
-            {current.no} / 07
+            {current.no} {c.chrome.dock.of}
           </span>
           <button
             type="button"
             data-sfx="page"
-            aria-label="Next plate"
+            aria-label={c.chrome.dock.next}
             onClick={() => scrollTo(`#${plates[(active + 1) % plates.length].id}`)}
           >
             →
@@ -460,19 +463,19 @@ export function Dock({
             onClick={() => setPanel((p) => !p)}
             aria-expanded={panel}
             aria-haspopup="dialog"
-            aria-label="Audio settings"
-            title="Sound and music options"
+            aria-label={c.chrome.dock.settingsAria}
+            title={c.chrome.dock.settingsTitle}
           >
             <span className="dock__music-wave" aria-hidden="true">
               <i />
               <i />
               <i />
             </span>
-            <span className="dock__music-label">Audio</span>
+            <span className="dock__music-label">{c.chrome.dock.settings}</span>
           </button>
           {panel && (
-            <div className="dock__panel" role="dialog" aria-label="Audio options">
-              <div className="dock__panel-head mono">Audio / options</div>
+            <div className="dock__panel" role="dialog" aria-label={c.chrome.dock.settingsAria}>
+              <div className="dock__panel-head mono">{c.chrome.dock.panelHead}</div>
               <button
                 type="button"
                 className="dock__opt"
@@ -480,7 +483,7 @@ export function Dock({
                 onClick={onToggleSound}
                 aria-pressed={soundOn}
               >
-                <span>Sound</span>
+                <span>{c.chrome.dock.sound}</span>
                 <span className="dock__opt-led" aria-hidden="true" />
               </button>
               <button
@@ -490,10 +493,31 @@ export function Dock({
                 onClick={onToggleMusic}
                 aria-pressed={musicOn}
               >
-                <span>Music</span>
+                <span>{c.chrome.dock.music}</span>
                 <span className="dock__opt-led" aria-hidden="true" />
               </button>
-              <p className="dock__panel-note mono">Interface sounds · HUNCH FM</p>
+              <div className="dock__lang">
+                <span>{c.chrome.dock.language}</span>
+                <span className="dock__lang-opts">
+                  <button
+                    type="button"
+                    className={`dock__lang-btn${locale === "en" ? " is-on" : ""}`}
+                    onClick={() => setLocale("en")}
+                    aria-pressed={locale === "en"}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    className={`dock__lang-btn${locale === "ru" ? " is-on" : ""}`}
+                    onClick={() => setLocale("ru")}
+                    aria-pressed={locale === "ru"}
+                  >
+                    RU
+                  </button>
+                </span>
+              </div>
+              <p className="dock__panel-note mono">{c.chrome.dock.panelNote}</p>
             </div>
           )}
         </div>
@@ -504,11 +528,11 @@ export function Dock({
           data-on={inkOn}
           onClick={onToggleInk}
           aria-pressed={inkOn}
-          aria-label="Toggle ink trail"
-          title="Leave a trail of ink with the cursor"
+          aria-label={c.chrome.dock.inkAria}
+          title={c.chrome.dock.inkTitle}
         >
           <span className="led" />
-          INK
+          {c.chrome.dock.ink}
         </button>
       </nav>
     </>
@@ -516,13 +540,14 @@ export function Dock({
 }
 
 export function Rails() {
+  const { c } = useI18n();
   return (
     <>
       <div className="rail-left" aria-hidden="true">
-        <span>Software by feel — issue 03</span>
+        <span>{c.chrome.rails.left}</span>
       </div>
       <div className="rail-right" aria-hidden="true">
-        <span>Live from the studio</span>
+        <span>{c.chrome.rails.right}</span>
       </div>
     </>
   );
@@ -547,6 +572,7 @@ export function NextStrip({
   bg: string;
   fg: string;
 }) {
+  const { c, fill } = useI18n();
   return (
     <button
       type="button"
@@ -554,12 +580,12 @@ export function NextStrip({
       style={{ background: bg, color: fg }}
       data-sfx="page"
       onClick={() => scrollTo(`#${to}`)}
-      data-cursor="TURN THE PAGE"
-      aria-label={`Next: ${no} ${label}`}
+      data-cursor={c.chrome.cursor.turnPage}
+      aria-label={fill(c.chrome.next.aria, { no, label })}
     >
       <span className="next-strip__holes" aria-hidden="true" />
       <span className="next-strip__inner">
-        <span className="next-strip__no">Next / {no}</span>
+        <span className="next-strip__no">{fill(c.chrome.next.label, { no })}</span>
         <span className="next-strip__label">{label}</span>
         <span className="next-strip__leader" aria-hidden="true" />
         <span className="next-strip__note">{note}</span>

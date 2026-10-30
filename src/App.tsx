@@ -13,9 +13,8 @@ import { initLenis, lockScroll } from "./lib/scroll";
 import { prefersReducedMotion } from "./lib/util";
 import { getMusicPlayer } from "./lib/music";
 import { playSfx, setSfxEnabled, type SfxName } from "./lib/sfx";
-import { PLATES as PLATE_META } from "./lib/plates";
-
-const PLATES: PlateRef[] = PLATE_META.map(({ id, label, no }) => ({ id, label, no }));
+import { PLATE_DATA, PLATE_ORDER } from "./content/data";
+import { useI18n } from "./i18n";
 
 const readPref = (key: string): boolean => {
   try {
@@ -40,6 +39,12 @@ export default function App() {
   const [musicOn, setMusicOn] = useState(() => readPref("hunch:music") && readPref("hunch:sound"));
   const [active, setActive] = useState(0);
   const firstAudioRun = useRef(true);
+  const { c } = useI18n();
+  const plates: PlateRef[] = PLATE_ORDER.map((id) => ({
+    id,
+    label: c.plates[id].short,
+    no: PLATE_DATA[id].no,
+  }));
 
   useEffect(() => {
     initLenis();
@@ -130,7 +135,7 @@ export default function App() {
 
   useEffect(() => {
     if (booting) return;
-    const els = PLATES.map((p) => document.getElementById(p.id)).filter(Boolean) as HTMLElement[];
+    const els = PLATE_ORDER.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -155,7 +160,7 @@ export default function App() {
         />
       )}
       <a className="skip-link" href="#main">
-        Skip to the plates
+        {c.common.skip}
       </a>
       <Grain />
       <Cursor />
@@ -166,8 +171,8 @@ export default function App() {
         <Signal />
         <NextStrip
           no="01"
-          label="The Bin"
-          note="six things we killed, with autopsies"
+          label={c.plates.bin.short}
+          note={c.plates.bin.note}
           to="bin"
           bg="var(--orange)"
           fg="var(--ink)"
@@ -175,8 +180,8 @@ export default function App() {
         <Bin />
         <NextStrip
           no="02"
-          label="The Patch Bay"
-          note="pull a cable, get a spec"
+          label={c.plates.patch.short}
+          note={c.plates.patch.note}
           to="patch"
           bg="var(--paper)"
           fg="var(--ink)"
@@ -184,8 +189,8 @@ export default function App() {
         <PatchBay />
         <NextStrip
           no="03"
-          label="The Fugue"
-          note="five movements, one score"
+          label={c.plates.fugue.short}
+          note={c.plates.fugue.note}
           to="fugue"
           bg="var(--cobalt)"
           fg="var(--bone)"
@@ -193,8 +198,8 @@ export default function App() {
         <Fugue soundOn={soundOn} onEnableSound={enableSound} />
         <NextStrip
           no="04"
-          label="The Ledger"
-          note="three tickets, no feature grid"
+          label={c.plates.ledger.short}
+          note={c.plates.ledger.note}
           to="ledger"
           bg="var(--paper)"
           fg="var(--ink)"
@@ -202,8 +207,8 @@ export default function App() {
         <Ledger />
         <NextStrip
           no="05"
-          label="The Séance"
-          note="six frequencies, some static"
+          label={c.plates.seance.short}
+          note={c.plates.seance.note}
           to="seance"
           bg="var(--orange)"
           fg="var(--ink)"
@@ -211,8 +216,8 @@ export default function App() {
         <Seance />
         <NextStrip
           no="06"
-          label="The Bench"
-          note="tune the site, then send a hunch"
+          label={c.plates.bench.short}
+          note={c.plates.bench.note}
           to="bench"
           bg="var(--paper)"
           fg="var(--ink)"
@@ -220,8 +225,8 @@ export default function App() {
         <Bench />
         <NextStrip
           no="07"
-          label="Sign-Off"
-          note="the issue ends, the studio doesn’t"
+          label={c.plates.signoff.short}
+          note={c.plates.signoff.note}
           to="signoff"
           bg="var(--orange)"
           fg="var(--ink)"
@@ -230,7 +235,7 @@ export default function App() {
       </main>
 
       <Dock
-        plates={PLATES}
+        plates={plates}
         active={active}
         inkOn={inkOn}
         onToggleInk={() => setInkOn((v) => !v)}

@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { onTick } from "../lib/ticker";
 import { clamp, prefersReducedMotion, warmthColor } from "../lib/util";
 import { useVibe } from "../lib/vibe";
+import { Rich, useI18n } from "../i18n";
 import { playSfx } from "../lib/sfx";
 
 /* A hand-drawn loop, turned into a twisted calligraphic ribbon. */
@@ -493,8 +494,9 @@ export function Organism() {
     };
   }, []);
 
+  const { c } = useI18n();
   return (
-    <figure className="organism" data-cursor="DRAG / POKE">
+    <figure className="organism" data-cursor={c.chrome.cursor.dragPoke}>
       <div className="organism__view">
         <div className="organism__stage" ref={mountRef} aria-hidden="true" />
         {fallback && (
@@ -503,19 +505,18 @@ export function Organism() {
           </div>
         )}
         <div className="organism__hud" aria-hidden="true">
-          <span className="hud-tl">FIG. 00 / THE HUNCH</span>
+          <span className="hud-tl">{c.signal.organism.hudTl}</span>
           <span className="hud-tr">
-            MESH Nº 114 · AZ <span ref={readoutRef}>000</span>°
+            {c.signal.organism.hudMesh} <span ref={readoutRef}>000</span>°
           </span>
-          <span className="hud-bl">3 INKS / BONE STOCK</span>
-          <span className="hud-br">MOVE THE POINTER</span>
+          <span className="hud-bl">{c.signal.organism.hudStock}</span>
+          <span className="hud-br">{c.signal.organism.hudMove}</span>
         </div>
       </div>
       <figcaption className="organism__cap">
         <span className="cap-line" />
         <span>
-          A specimen, not an ornament. It doesn’t know what it is.
-          <em> Drag it. Poke it.</em>
+          <Rich text={c.signal.organism.caption} />
         </span>
       </figcaption>
     </figure>

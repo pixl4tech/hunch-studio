@@ -1,95 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { playSfx } from "../lib/sfx";
-
-type Channel = {
-  no: string;
-  freq: number;
-  station: string;
-  quote: string;
-  who: string;
-  role: string;
-  rec: string;
-  strength: number;
-  wave: number[];
-};
-
-const CHANNELS: Channel[] = [
-  {
-    no: "01",
-    freq: 88.1,
-    station: "The Scheduler",
-    quote:
-      "We asked for a dashboard. They gave us a drawer that slides out when you need it. Nobody has opened the old dashboard since.",
-    who: "M.",
-    role: "founder / a scheduling tool",
-    rec: "13:04:22 / 00:41",
-    strength: 86,
-    wave: [4, 12, 7, 20, 9, 15, 5, 22, 6, 13, 4, 18, 8, 11, 3, 17, 6, 21, 9, 12],
-  },
-  {
-    no: "02",
-    freq: 91.3,
-    station: "The Freight Co.",
-    quote:
-      "The invoice said ‘one (1) loop, plus feelings.’ I signed it without reading the rest. The thing shipped on a Thursday. I still remember the Thursday.",
-    who: "J.",
-    role: "COO / a freight company that will remain anonymous",
-    rec: "09:12:07 / 01:12",
-    strength: 73,
-    wave: [7, 4, 16, 9, 22, 5, 12, 18, 3, 10, 19, 6, 14, 4, 21, 8, 11, 17, 5, 13],
-  },
-  {
-    no: "03",
-    freq: 94.7,
-    station: "The Members’ Club",
-    quote:
-      "Onboarding used to be a form. Now it’s four questions and a sound. Signups went sideways. In the good direction. We had to stop checking the dashboard hourly.",
-    who: "R.",
-    role: "head of product / a members’ club",
-    rec: "17:48:13 / 00:58",
-    strength: 91,
-    wave: [9, 21, 12, 5, 18, 7, 22, 14, 4, 19, 8, 16, 3, 11, 20, 6, 13, 9, 17, 5],
-  },
-  {
-    no: "04",
-    freq: 99.5,
-    station: "The Museum",
-    quote:
-      "They found a bug in our font. We didn’t know fonts could have bugs. They fixed our font. The guard noticed before we did.",
-    who: "A.",
-    role: "creative director / a museum",
-    rec: "11:26:54 / 00:37",
-    strength: 64,
-    wave: [3, 14, 8, 19, 5, 12, 21, 7, 16, 4, 10, 18, 6, 13, 9, 20, 5, 15, 8, 11],
-  },
-  {
-    no: "05",
-    freq: 102.9,
-    station: "The Bakery",
-    quote:
-      "I still don’t know how the checkout works. Neither do they, I think. It works anyway. The waiting list is now the website.",
-    who: "T.",
-    role: "owner / a bakery with a waiting list",
-    rec: "06:03:41 / 00:29",
-    strength: 58,
-    wave: [6, 17, 4, 11, 20, 8, 14, 5, 18, 9, 12, 3, 21, 7, 15, 4, 19, 6, 10, 13],
-  },
-  {
-    no: "06",
-    freq: 107.1,
-    station: "The Quiet One",
-    quote:
-      "They kept a version of the logo we rejected. It’s on the wall now. I like it more than the one we shipped. I didn’t tell them that.",
-    who: "S.",
-    role: "founder / a therapy platform",
-    rec: "21:19:02 / 00:44",
-    strength: 79,
-    wave: [11, 4, 19, 7, 14, 22, 5, 12, 3, 18, 8, 15, 6, 20, 4, 13, 9, 17, 7, 10],
-  },
-];
+import { CHANNEL_DATA, CHANNEL_IDS } from "../content/data";
+import { Rich, useI18n } from "../i18n";
 
 const DIAL_SPAN = 240;
-const STEP = DIAL_SPAN / (CHANNELS.length - 1);
+const STEP = DIAL_SPAN / (CHANNEL_IDS.length - 1);
 const angleFor = (i: number) => -DIAL_SPAN / 2 + i * STEP;
 
 function ticks() {
@@ -101,6 +16,8 @@ function ticks() {
 }
 
 export function Seance() {
+  const { c, fill, fmt } = useI18n();
+  const channels = CHANNEL_IDS.map((id) => ({ id, ...CHANNEL_DATA[id], ...c.seance.channels[id] }));
   const [idx, setIdx] = useState(0);
   const [tuning, setTuning] = useState(false);
   const [scan, setScan] = useState(false);
@@ -109,11 +26,11 @@ export function Seance() {
   const tuner = useRef<number>(0);
   const noiseRef = useRef<HTMLDivElement>(null);
 
-  const channel = CHANNELS[idx];
+  const channel = channels[idx];
   const knobAngle = angleFor(idx);
 
   const tune = (next: number, byUser = true) => {
-    const n = (next + CHANNELS.length) % CHANNELS.length;
+    const n = (next + channels.length) % channels.length;
     if (byUser) {
       setScan(false);
       playSfx("dial");
@@ -127,7 +44,7 @@ export function Seance() {
 
   useEffect(() => {
     if (!scan) return;
-    const t = window.setTimeout(() => tune((idx + 1) % CHANNELS.length, false), 2100);
+    const t = window.setTimeout(() => tune((idx + 1) % channels.length, false), 2100);
     return () => window.clearTimeout(t);
   }, [scan, idx]);
 
@@ -202,26 +119,25 @@ export function Seance() {
           <div>
             <p className="eyebrow">
               <span className="tick" style={{ background: "var(--lime)" }} />
-              <span className="lit">Plate 05</span>
+              <span className="lit">{c.seance.eyebrow.plate}</span>
               <span className="sep">/</span>
-              <span>The Séance</span>
+              <span>{c.seance.eyebrow.section}</span>
               <span className="sep">/</span>
-              <span>Transmissions</span>
+              <span>{c.seance.eyebrow.transmissions}</span>
             </p>
             <h2 className="seance__title" id="seance-title">
-              Six frequencies,
+              {c.seance.title1}
               <br />
-              <em>some static.</em>
+              <Rich text={c.seance.title2} />
             </h2>
           </div>
           <div className="seance__head-note">
             <p className="lede">
-              Turn the dial. Six clients, six frequencies, lightly edited for swearing and length.
-              The static is real. The names are not — mostly.
+              {c.seance.lede}
             </p>
             <div className="seance__head-meta">
-              <span className="stamp seance__onair">On air</span>
-              <span className="mono">Receiver Nº 05 / HUNCH FM / Stereo</span>
+              <span className="stamp seance__onair">{c.seance.onAir}</span>
+              <span className="mono">{c.seance.receiver}</span>
             </div>
           </div>
         </header>
@@ -229,8 +145,8 @@ export function Seance() {
         <div className="seance__console">
           <div className="receiver">
             <div className="receiver__head">
-              <span className="mono">Hunch receiver / model 05</span>
-              <span className="mono">FM · Stereo</span>
+              <span className="mono">{c.seance.head.model}</span>
+              <span className="mono">{c.seance.head.fm}</span>
             </div>
 
             <div
@@ -238,18 +154,18 @@ export function Seance() {
               ref={dialRef}
               role="slider"
               tabIndex={0}
-              aria-label="Client channel"
+              aria-label={c.seance.dial.aria}
               aria-valuemin={1}
-              aria-valuemax={CHANNELS.length}
+              aria-valuemax={channels.length}
               aria-valuenow={idx + 1}
-              aria-valuetext={`${channel.freq} FM, ${channel.station}`}
+              aria-valuetext={fill(c.seance.dial.value, { freq: fmt.number(channel.freq, 1), station: channel.station })}
               onPointerDown={onDialDown}
               onPointerMove={onDialMove}
               onPointerUp={onDialUp}
               onPointerCancel={onDialUp}
               onKeyDown={onDialKey}
               data-sfx="dial"
-              data-cursor="TURN THE DIAL"
+              data-cursor={c.chrome.cursor.turnDial}
             >
               <svg className="receiver__face" viewBox="0 0 300 300" aria-hidden="true">
                 <path
@@ -273,7 +189,7 @@ export function Seance() {
                     />
                   );
                 })}
-                {CHANNELS.map((c, i) => {
+                {channels.map((c, i) => {
                   const a = angleFor(i);
                   const [x, y] = polar(a, 108);
                   return (
@@ -287,7 +203,7 @@ export function Seance() {
                         fontSize="7"
                         letterSpacing="0.08em"
                       >
-                        {c.freq}
+                        {fmt.number(c.freq, 1)}
                       </text>
                       <text
                         x={x}
@@ -313,7 +229,7 @@ export function Seance() {
                 </div>
               </div>
 
-              <span className="receiver__dial-label mono">drag / scroll arrows</span>
+              <span className="receiver__dial-label mono">{c.seance.dial.label}</span>
             </div>
 
             <div className="receiver__readout">
@@ -323,7 +239,7 @@ export function Seance() {
                 <span className="mono">MHz</span>
               </div>
               <div className="receiver__signal">
-                <span className="mono">Signal {channel.strength}%</span>
+                <span className="mono">{fill(c.seance.readout.signal, { strength: channel.strength })}</span>
                 <span className="receiver__bars" aria-hidden="true">
                   {Array.from({ length: 12 }).map((_, i) => (
                     <i
@@ -336,13 +252,13 @@ export function Seance() {
             </div>
 
             <div className="receiver__station">
-              <span className="mono">Station {channel.no}</span>
+              <span className="mono">{fill(c.seance.readout.station, { no: channel.no })}</span>
               <b>{channel.station}</b>
             </div>
 
             <div className="receiver__controls">
-              <button type="button" className="receiver__btn" onClick={() => tune(idx - 1)} aria-label="Previous channel">
-                ← Tune
+              <button type="button" className="receiver__btn" onClick={() => tune(idx - 1)} aria-label={c.seance.dial.prev}>
+                ← {c.seance.dial.prev}
               </button>
               <button
                 type="button"
@@ -351,10 +267,10 @@ export function Seance() {
                 onClick={() => setScan((s) => !s)}
                 aria-pressed={scan}
               >
-                {scan ? "■ Stop" : "Scan ▶"}
+                {scan ? c.seance.dial.stop : c.seance.dial.scan}
               </button>
-              <button type="button" className="receiver__btn" onClick={() => tune(idx + 1)} aria-label="Next channel">
-                Tune →
+              <button type="button" className="receiver__btn" onClick={() => tune(idx + 1)} aria-label={c.seance.dial.next}>
+                {c.seance.dial.next} →
               </button>
             </div>
 
@@ -364,10 +280,10 @@ export function Seance() {
           <div className={`transmission${tuning ? " is-tuning" : ""}`} aria-live="polite">
             <div className="transmission__head">
               <span className="mono">
-                <span className="dot-live" style={{ background: "var(--lime)" }} /> Signal locked
+                <span className="dot-live" style={{ background: "var(--lime)" }} /> {c.seance.transmission.locked}
               </span>
               <span className="mono">{channel.rec}</span>
-              <span className="mono">Side A</span>
+              <span className="mono">{c.seance.transmission.sideA}</span>
             </div>
 
             <div className="transmission__body">
@@ -388,12 +304,12 @@ export function Seance() {
             </div>
 
             <div className="transmission__foot">
-              <span className="mono">Transcript lightly edited for swearing</span>
-              <span className="mono">Frequency {channel.freq.toFixed(1)}</span>
+              <span className="mono">{c.seance.transmission.edited}</span>
+              <span className="mono">{fill(c.seance.transmission.frequency, { freq: fmt.number(channel.freq, 1) })}</span>
             </div>
 
-            <div className="channels" role="group" aria-label="Channels">
-              {CHANNELS.map((c, i) => (
+            <div className="channels" role="group" aria-label={c.seance.transmission.channels}>
+              {channels.map((c, i) => (
                 <button
                   key={c.no}
                   type="button"
@@ -403,7 +319,7 @@ export function Seance() {
                 >
                   <span className="channel__no mono">CH {c.no}</span>
                   <span className="channel__station">{c.station}</span>
-                  <span className="channel__freq mono">{c.freq}</span>
+                  <span className="channel__freq mono">{fmt.number(c.freq, 1)}</span>
                 </button>
               ))}
             </div>
@@ -412,13 +328,12 @@ export function Seance() {
 
         <div className="seance__foot">
           <p className="seance__side">
-            Some clients are quiet on purpose. <em>We keep their names in the drawer with the cursor’s hat.</em>
+            <Rich text={c.seance.foot.side} />
           </p>
           <p className="footnote">
-            Quotes are real, lightly trimmed. No logos were harmed. If you’re one of the six: hello,
-            you can hear us again.
+            {c.seance.foot.footnote}
           </p>
-          <span className="stamp seance__stamp">Side B</span>
+          <span className="stamp seance__stamp">{c.seance.foot.stamp}</span>
         </div>
       </div>
     </section>

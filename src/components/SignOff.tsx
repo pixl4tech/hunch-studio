@@ -3,10 +3,12 @@ import { onTick } from "../lib/ticker";
 import { scrollTo } from "../lib/scroll";
 import { clamp } from "../lib/util";
 import { playSfx } from "../lib/sfx";
+import { Rich, useI18n } from "../i18n";
 
 const EMAIL = "hello@hunch.studio";
 
 export function SignOff() {
+  const { c } = useI18n();
   const markRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
@@ -61,16 +63,16 @@ export function SignOff() {
         <div className="signoff__kicker">
           <p className="eyebrow">
             <span className="tick" />
-            <span className="lit">Plate 07</span>
+            <span className="lit">{c.signoff.eyebrow.plate}</span>
             <span className="sep">/</span>
-            <span>Sign-off</span>
+            <span>{c.signoff.eyebrow.section}</span>
             <span className="sep">/</span>
-            <span>End of issue</span>
+            <span>{c.signoff.eyebrow.end}</span>
           </p>
-          <span className="mono signoff__issue">Issue 03 · 500 copies · of which one is online</span>
+          <span className="mono signoff__issue">{c.signoff.issue}</span>
         </div>
 
-        <div className="signoff__mark" ref={markRef} data-cursor="MISPRINT" onPointerEnter={() => playSfx("ink")}>
+        <div className="signoff__mark" ref={markRef} data-cursor={c.chrome.cursor.misprint} onPointerEnter={() => playSfx("ink")}>
           <span className="signoff__layer signoff__layer--blue" aria-hidden="true">
             HUNCH
           </span>
@@ -80,65 +82,59 @@ export function SignOff() {
           <h2 className="signoff__word" id="signoff-title">
             HUNCH<span className="signoff__reg">®</span>
           </h2>
-          <span className="signoff__subword">A studio for software with a pulse</span>
+          <span className="signoff__subword" data-place={c.signoff.place}>{c.signoff.subword}</span>
         </div>
 
         <div className="signoff__close">
           <p className="signoff__last">
-            That’s the issue. <em>The studio is still open.</em>
+            <Rich text={c.signoff.last} />
           </p>
           <div className="signoff__actions">
             <a className="btn btn--fill signoff__mail" data-sfx="paper" href={`mailto:${EMAIL}`}>
-              Tell us a hunch <span className="arw">↗</span>
+              {c.signoff.mail} <span className="arw">↗</span>
             </a>
             <button type="button" className="btn btn--ghost" data-sfx="success" onClick={copy}>
-              {copied ? "Address copied ✓" : "Copy the address"}
+              {copied ? c.signoff.copied : c.signoff.copy}
             </button>
             <button type="button" className="btn btn--ghost" data-sfx="page" onClick={() => scrollTo("#signal", -10)}>
-              Back to the cover <span className="arw">↑</span>
+              {c.signoff.back} <span className="arw">↑</span>
             </button>
           </div>
           <div className="signoff__close-meta">
-            <span className="mono">Two desks · one kettle · no decks</span>
-            <span className="mono">Rotterdam / 51.92°N 4.48°E</span>
+            <span className="mono">{c.signoff.closeMeta1}</span>
+            <span className="mono">{c.signoff.closeMeta2}</span>
           </div>
         </div>
       </div>
 
       <div className="shell signoff__colophon">
         <div className="signoff__col">
-          <span className="signoff__col-label mono">Studio</span>
-          <p>HUNCH Studio<br />Rotterdam, NL</p>
-          <p className="signoff__sm">Two desks, one kettle.<br />Open Tue—Thu, 09:00—18:00 CET.<br />Closed in August, like a proper studio.</p>
+          <span className="signoff__col-label mono">{c.signoff.colophon.studio}</span>
+          <p>{c.signoff.colophon.studioName}<br />{c.signoff.colophon.studioPlace}</p>
+          <p className="signoff__sm">{c.signoff.colophon.studioNote}</p>
         </div>
         <div className="signoff__col">
-          <span className="signoff__col-label mono">Contact</span>
+          <span className="signoff__col-label mono">{c.signoff.colophon.contact}</span>
           <p>
             <a className="link" href={`mailto:${EMAIL}`}>
               {EMAIL}
             </a>
           </p>
-          <p className="signoff__sm">+31 6 0000 0000 (please don’t)<br />Signal: ask.<br />We answer around 09:00 CET.</p>
+          <p className="signoff__sm">{c.signoff.colophon.contactNote}</p>
         </div>
         <div className="signoff__col">
-          <span className="signoff__col-label mono">Credits</span>
-          <p className="signoff__sm">
-            Set in Bricolage Grotesque, Instrument Serif and JetBrains Mono. Built in a browser, by
-            hand, on a laptop, on a train. No templates were harmed. The cursor is custom. So is the
-            rest.
-          </p>
+          <span className="signoff__col-label mono">{c.signoff.colophon.credits}</span>
+          <p className="signoff__sm">{c.signoff.colophon.creditsBody}</p>
           <p className="signoff__sm signoff__model">
-            Made on DeepSeek V4.1 Flash 1017<br />
-            maya-deepseek/deepseek-v4.1-flash · Maya-S · reasoning max<br />
-            1,272,527 tokens read · 818,340 written · 89.6M reused
+            {c.signoff.colophon.model1}<br />
+            {c.signoff.colophon.model2}<br />
+            {c.signoff.colophon.model3}
           </p>
         </div>
         <div className="signoff__col">
-          <span className="signoff__col-label mono">Legal</span>
-          <p className="signoff__sm">
-            © 2026 HUNCH Studio<br />VAT NL000000000B01<br />“Synergy” used under protest.<br />Some
-            feelings reserved.
-          </p>
+          <span className="signoff__col-label mono">{c.signoff.colophon.legal}</span>
+          <p className="signoff__sm">{c.signoff.colophon.legalBody}</p>
+          <p className="signoff__sm signoff__fiction">{c.signoff.colophon.fiction}</p>
         </div>
 
         <div className="signoff__seal">
@@ -152,18 +148,18 @@ export function SignOff() {
               <g className="seal__ring">
                 <text fontFamily="JetBrains Mono Variable, monospace" fontSize="6.4" fill="rgba(238,231,215,0.6)" letterSpacing="1.9">
                   <textPath href="#seal-path" startOffset="0">
-                    HUNCH STUDIO · SOFTWARE BY FEEL · ROTTERDAM · EST 2023 ·
+                    {c.signoff.seal.ring}
                   </textPath>
                 </text>
               </g>
             </svg>
             <span className="seal__center">03</span>
           </div>
-          <span className="mono seal__label">The seal is not legally binding</span>
+          <span className="mono seal__label">{c.signoff.seal.label}</span>
         </div>
 
         <div className="signoff__barcode">
-          <span className="mono signoff__bc-label">HUNCH / issue 03 / 2026</span>
+          <span className="mono signoff__bc-label">{c.signoff.barcode.label}</span>
           <span className="barcode signoff__bars" aria-hidden="true">
             {Array.from({ length: 46 }).map((_, i) => (
               <i
@@ -175,19 +171,19 @@ export function SignOff() {
               />
             ))}
           </span>
-          <span className="mono signoff__bc-mid">Printed on the internet · not for resale</span>
-          <span className="mono signoff__bc-num">5 900 123 987 003</span>
+          <span className="mono signoff__bc-mid">{c.signoff.barcode.mid}</span>
+          <span className="mono signoff__bc-num">{c.signoff.barcode.num}</span>
         </div>
       </div>
 
       <div className="signoff__end">
         <div className="shell signoff__end-inner">
-          <p className="signoff__hand">Made by hand, <em>mostly.</em></p>
+          <p className="signoff__hand"><Rich text={c.signoff.end.hand} /></p>
           <p className="signoff__tiny mono">
-            Row 4,001 — this is where the footer ends. You’re welcome.
+            {c.signoff.end.tiny}
           </p>
           <button type="button" className="signoff__top-btn mono" data-sfx="page" onClick={() => scrollTo("#signal", -10)}>
-            ↑ Back to the cover
+            {c.signoff.end.top}
           </button>
         </div>
       </div>

@@ -2,15 +2,10 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { useVibe, type Tier } from "../lib/vibe";
 import { scrollTo } from "../lib/scroll";
 import { playSfx } from "../lib/sfx";
+import { BENCH_MODE_IDS } from "../content/data";
+import { Rich, useI18n } from "../i18n";
 
 const EMAIL = "hello@hunch.studio";
-
-const MODES: { id: Exclude<Tier, null> | null; label: string; sub: string }[] = [
-  { id: "build", label: "A hunch", sub: "something new" },
-  { id: "sprint", label: "A rescue", sub: "something slightly off" },
-  { id: "date", label: "A standing date", sub: "taste on tap" },
-  { id: null, label: "Not sure yet", sub: "that’s fine" },
-];
 
 function Fader({
   label,
@@ -58,7 +53,13 @@ function Fader({
 }
 
 export function Bench() {
+  const { c, fill, fmt } = useI18n();
   const { vibe, setVibe, resetVibe, tier, setTier } = useVibe();
+  const modes = BENCH_MODE_IDS.map((id) => ({
+    id,
+    tier: (id === "unsure" ? null : id) as Tier,
+    ...c.bench.console.modes[id],
+  }));
   const [mode, setMode] = useState<Tier>("build");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -87,29 +88,34 @@ export function Bench() {
   }, []);
 
   const index = (vibe.warmth + vibe.grain + vibe.tempo) / 3;
+  const band = (v: number) => (v < 0.33 ? 0 : v < 0.68 ? 1 : 2);
   const descriptor = useMemo(() => {
-    const warm = vibe.warmth < 0.33 ? "cool" : vibe.warmth < 0.68 ? "warm" : "violet-hour";
-    const grain = vibe.grain < 0.33 ? "clean" : vibe.grain < 0.68 ? "papery" : "dusty";
-    const pace = vibe.tempo < 0.33 ? "still" : vibe.tempo < 0.68 ? "humming" : "restless";
-    return `a ${warm}, ${grain}, ${pace} room`;
-  }, [vibe.warmth, vibe.grain, vibe.tempo]);
+    const warm = c.bench.tuner.warm[band(vibe.warmth)];
+    const grain = c.bench.tuner.grain[band(vibe.grain)];
+    const pace = c.bench.tuner.pace[band(vibe.tempo)];
+    return fill(c.bench.tuner.desc, { warm, grain, pace });
+  }, [vibe.warmth, vibe.grain, vibe.tempo, c, fill]);
 
-  const modeLabel = MODES.find((m) => m.id === mode)?.label ?? "Not sure yet";
+  const modeLabel = modes.find((m) => m.id === mode)?.label ?? c.bench.console.modes.unsure.label;
 
   const draft = () =>
-    `Session request / ${modeLabel}\n\nName: ${name}\nSignal: ${email}\n\n${
-      patch ? `Attached patch:\n${patch}\n\n` : ""
-    }${message}\n\n— sent from hunch.studio, by hand`;
+    fill(c.bench.draft.body, {
+      mode: modeLabel,
+      name,
+      email,
+      patch: patch ? fill(c.bench.draft.patch, { patch }) : "",
+      message,
+    });
 
   const mailto = `mailto:${EMAIL}?subject=${encodeURIComponent(
-    `A hunch — ${modeLabel} — ${name || "no name yet"}`,
+    fill(c.bench.draft.subject, { mode: modeLabel, name: name || c.bench.draft.noName }),
   )}&body=${encodeURIComponent(draft())}`;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return setError("We need something to call you. A first name is plenty.");
-    if (!email.includes("@") || email.length < 5) return setError("That signal looks broken. Try an address with an @ in it.");
-    if (message.trim().length < 6) return setError("Give us one sentence. Even a bad one. Especially a bad one.");
+    if (!name.trim()) return setError(c.bench.console.errors.name);
+    if (!email.includes("@") || email.length < 5) return setError(c.bench.console.errors.email);
+    if (message.trim().length < 6) return setError(c.bench.console.errors.message);
     setError("");
     playSfx("stamp");
     setStatus("sending");
@@ -148,26 +154,25 @@ export function Bench() {
           <div>
             <p className="eyebrow">
               <span className="tick" />
-              <span className="lit">Plate 06</span>
+              <span className="lit">{c.bench.eyebrow.plate}</span>
               <span className="sep">/</span>
-              <span>The Bench</span>
+              <span>{c.bench.eyebrow.section}</span>
               <span className="sep">/</span>
-              <span>Try it</span>
+              <span>{c.bench.eyebrow.try}</span>
             </p>
             <h2 className="bench__title" id="bench-title">
-              The site is
+              {c.bench.title1}
               <br />
-              the <em>pitch.</em>
+              <Rich text={c.bench.title2} />
             </h2>
           </div>
           <div className="bench__head-note">
             <p className="lede">
-              Move the faders. The page changes — warmth, grain, tempo. This is the same interface
-              we use on a kickoff call, minus the candles.
+              {c.bench.lede}
             </p>
             <div className="bench__head-meta">
-              <span className="stamp bench__live">Live demo</span>
-              <span className="mono">Tuner Mk. 06 / local only / no tracking</span>
+              <span className="stamp bench__live">{c.bench.live}</span>
+              <span className="mono">{c.bench.meta}</span>
             </div>
           </div>
         </header>
@@ -175,16 +180,16 @@ export function Bench() {
         <div className="bench__console">
           <div className="tuner">
             <div className="tuner__head">
-              <span className="mono">The tuner / Mk. 06</span>
+              <span className="mono">{c.bench.tuner.title}</span>
               <span className="mono tuner__live">
-                <span className="dot-live" style={{ background: "var(--lime)" }} /> Live on this page
+                <span className="dot-live" style={{ background: "var(--lime)" }} /> {c.bench.tuner.live}
               </span>
             </div>
 
             <div className="vibe">
               <div className="vibe__top">
-                <span className="mono">Vibe index</span>
-                <span className="vibe__num">{index.toFixed(2)}</span>
+                <span className="mono">{c.bench.tuner.index}</span>
+                <span className="vibe__num">{fmt.number(index, 2)}</span>
               </div>
               <div className="vibe__meter" aria-hidden="true">
                 <span className="vibe__needle" style={{ left: `${index * 100}%` }} />
@@ -193,29 +198,29 @@ export function Bench() {
                 ))}
               </div>
               <p className="vibe__desc">
-                “{descriptor}” <span>— as read by the room</span>
+                {descriptor}
               </p>
             </div>
 
             <div className="tuner__faders">
               <Fader
-                label="Warmth"
-                endA="cold, clinical"
-                endB="warm, human"
+                label={c.bench.faders.warmth.label}
+                endA={c.bench.faders.warmth.endA}
+                endB={c.bench.faders.warmth.endB}
                 value={vibe.warmth}
                 onChange={(warmth) => setVibe({ warmth })}
               />
               <Fader
-                label="Grain"
-                endA="clean glass"
-                endB="dusty paper"
+                label={c.bench.faders.grain.label}
+                endA={c.bench.faders.grain.endA}
+                endB={c.bench.faders.grain.endB}
                 value={vibe.grain}
                 onChange={(grain) => setVibe({ grain })}
               />
               <Fader
-                label="Tempo"
-                endA="still"
-                endB="restless"
+                label={c.bench.faders.tempo.label}
+                endA={c.bench.faders.tempo.endA}
+                endB={c.bench.faders.tempo.endB}
                 value={vibe.tempo}
                 onChange={(tempo) => setVibe({ tempo })}
               />
@@ -223,49 +228,47 @@ export function Bench() {
 
             <div className="tuner__actions">
               <button type="button" className="tuner__btn" data-sfx="switch" onClick={resetVibe}>
-                Reset to house
+                {c.bench.tuner.reset}
               </button>
               <button type="button" className="tuner__btn tuner__btn--hot" data-sfx="switch" onClick={detune}>
-                Detune ↯
+                {c.bench.tuner.detune}
               </button>
             </div>
 
             <p className="tuner__note">
-              Detune is what we do when a client says “make it pop”. It is also what we do when we’re
-              bored. The house setting is where we start every project.
+              {c.bench.tuner.note}
             </p>
 
             <div className="tuner__plaque" aria-hidden="true">
-              <span className="mono">calibrated by hand</span>
+              <span className="mono">{c.bench.tuner.plaque}</span>
               <span className="tuner__screw" />
             </div>
           </div>
 
           <div className="console">
             <div className="console__head">
-              <span className="mono">Transmission / form 7—B</span>
-              <span className="mono">No CRM · one inbox · one human</span>
+              <span className="mono">{c.bench.console.head}</span>
+              <span className="mono">{c.bench.console.sub}</span>
             </div>
 
             {status === "ready" ? (
               <div className="console__done" aria-live="polite">
-                <span className="console__done-stamp">Received</span>
+                <span className="console__done-stamp">{c.bench.console.received}</span>
                 <p className="console__done-line">
-                  Session code <b>{code}</b>. One of us will answer from {EMAIL}, usually around
-                  09:00 CET. Expect a question, not a deck.
+                  {fill(c.bench.console.doneLine, { code, email: EMAIL })}
                 </p>
                 <div className="console__draft">
-                  <span className="mono">Draft / {modeLabel}</span>
+                  <span className="mono">{c.bench.console.draft} {modeLabel}</span>
                   <p>{name || "—"} / {email || "—"}</p>
                   <p>{message || "—"}</p>
                   {patch && <pre>{patch}</pre>}
                 </div>
                 <div className="console__actions">
                   <a className="btn btn--fill btn--sm" data-sfx="paper" href={mailto}>
-                    Open in mail app <span className="arw">↗</span>
+                    {c.bench.console.openMail} <span className="arw">↗</span>
                   </a>
                   <button type="button" className="btn btn--ghost btn--sm" data-sfx="success" onClick={copyAddress}>
-                    {copied ? "Copied ✓" : `Copy ${EMAIL}`}
+                    {copied ? c.common.copied : fill(c.bench.console.copyMail, { email: EMAIL })}
                   </button>
                   <button
                     type="button"
@@ -276,12 +279,11 @@ export function Bench() {
                       setCode("");
                     }}
                   >
-                    Write another
+                    {c.bench.console.writeAnother}
                   </button>
                 </div>
                 <p className="console__local mono">
-                  This console is local. Nothing was sent from your browser — the mail app button
-                  carries the draft.
+                  {c.bench.console.local}
                 </p>
               </div>
             ) : (
@@ -289,43 +291,43 @@ export function Bench() {
                 <div className="request__row">
                   <label className="field">
                     <span className="field__no mono">01</span>
-                    <span className="field__label mono">Your name</span>
+                    <span className="field__label mono">{c.bench.console.form.name}</span>
                     <input
                       type="text"
                       value={name}
                       onKeyDown={() => playSfx("type")}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="first name is plenty"
+                      placeholder={c.bench.console.form.namePlaceholder}
                       autoComplete="name"
                     />
                   </label>
                   <label className="field">
                     <span className="field__no mono">02</span>
-                    <span className="field__label mono">Signal / email</span>
+                    <span className="field__label mono">{c.bench.console.form.email}</span>
                     <input
                       type="email"
                       value={email}
                       onKeyDown={() => playSfx("type")}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@somewhere"
+                      placeholder={c.bench.console.form.emailPlaceholder}
                       autoComplete="email"
                     />
                   </label>
                 </div>
 
-                <div className="request__modes" role="group" aria-label="What are we making">
-                  <span className="field__label mono">03 / I’m here about</span>
+                <div className="request__modes" role="group" aria-label={c.bench.console.form.message}>
+                  <span className="field__label mono">{c.bench.console.form.about}</span>
                   <div className="modes">
-                    {MODES.map((m) => (
+                    {modes.map((m) => (
                       <button
-                        key={m.label}
+                        key={m.id}
                         type="button"
                         className={`mode${mode === m.id ? " is-on" : ""}`}
                         data-sfx="switch"
                         aria-pressed={mode === m.id}
                         onClick={() => {
-                          setMode(m.id);
-                          setTier(m.id);
+                          setMode(m.tier);
+                          setTier(m.tier);
                         }}
                       >
                         <span className="mode__label">{m.label}</span>
@@ -337,21 +339,21 @@ export function Bench() {
 
                 <label className="field field--area">
                   <span className="field__no mono">04</span>
-                  <span className="field__label mono">What are we making?</span>
+                  <span className="field__label mono">{c.bench.console.form.message}</span>
                   <textarea
                     value={message}
                     onKeyDown={() => playSfx("type")}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={4}
-                    placeholder="A sentence is enough. The hunch, the snag, the feeling you want in the room."
+                    placeholder={c.bench.console.form.messagePlaceholder}
                   />
                 </label>
 
                 {patch && (
                   <div className="attached">
-                    <span className="attached__label mono">Attached / patch sheet</span>
+                    <span className="attached__label mono">{c.bench.console.attach}</span>
                     <pre>{patch}</pre>
-                    <button type="button" className="attached__x" data-sfx="paper" onClick={() => setPatch("")} aria-label="Remove attached patch">
+                    <button type="button" className="attached__x" data-sfx="paper" onClick={() => setPatch("")} aria-label={c.bench.console.attachRemove}>
                       ✕
                     </button>
                   </div>
@@ -365,24 +367,23 @@ export function Bench() {
                     className={`transmit${status === "sending" ? " is-sending" : ""}`}
                     disabled={status === "sending"}
                   >
-                    <span>{status === "sending" ? "Transmitting" : "Transmit"}</span>
+                    <span>{status === "sending" ? c.bench.console.sending : c.bench.console.submit}</span>
                     <span className="transmit__arw" aria-hidden="true">
                       {status === "sending" ? "···" : "↗"}
                     </span>
                     <span className="transmit__bar" aria-hidden="true" />
                   </button>
                   <p className="request__fine mono">
-                    No sequence. No deck. One of us reads this, usually around 09:00 CET. If you’re
-                    in a hurry, say so in the first line.
+                    {c.bench.console.fine}
                   </p>
                 </div>
               </form>
             )}
 
             <div className="console__foot">
-              <span className="mono">HUNCH / studio 03 / window 7—B</span>
+              <span className="mono">{c.bench.console.foot}</span>
               <button type="button" className="console__copy mono" onClick={copyAddress}>
-                {copied ? "copied ✓" : EMAIL}
+                {copied ? c.common.copied : EMAIL}
               </button>
             </div>
           </div>
@@ -390,14 +391,13 @@ export function Bench() {
 
         <div className="bench__foot">
           <p className="bench__quote">
-            The best demo we have is the thing you’re already touching. <em>This is it.</em>
+            <Rich text={c.bench.foot.quote} />
           </p>
           <p className="footnote">
-            The tuner writes to this page, not to us. The console is local. The feeling is the
-            product. The rest is a conversation.
+            {c.bench.foot.footnote}
           </p>
           <button type="button" className="btn btn--fill bench__cta" onClick={() => scrollTo("#signoff")}>
-            Go to the sign-off <span className="arw">↓</span>
+            {c.bench.foot.cta} <span className="arw">↓</span>
           </button>
         </div>
       </div>

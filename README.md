@@ -51,6 +51,21 @@ One subject — **F–A–C–B♭–A–G** — enters five times:
 
 One week = one bar of 4/4 at ♩=75. Eight bars = 25.6 seconds, so the overlapping week ranges in the plate are literally overlapping voices. Registers are separated (Listen high, Loop mid, Lash low, Lift mid-high, Lull low-mid), a quiet house-chord bed changes with the week so the overlaps share one harmony, and every voice enters through a 0.6-second fade. The Lull pad withholds its 3rd until the final bar, so the melody's B♭ is a suspension rather than a cluster. The room is a short synthetic impulse response, normalised so the score — not the compressor — decides the balance.
 
+## Localisation
+
+Two client-facing locales: **English** and **Russian**. The UI is a single-page issue with hash navigation, so the URL contract is a query parameter:
+
+```
+?lang=ru        # explicit locale; remembered in localStorage
+                # priority: URL > localStorage > en
+```
+
+The **Settings** popover in the dock holds Sound / Music / Language. Switching language updates the UI, `?lang` (via `replaceState`, preserving the hash), `localStorage("hunch:locale")`, `<html lang>`, `document.title` and the social meta immediately.
+
+All client copy — including data arrays, aria labels, placeholders, `mailto` drafts and the CSS stamp text — lives in `src/i18n/en.ts` and `src/i18n/ru.ts`. `en` is the source of truth; `ru` is typed as `Content` (`typeof en`), so a missing key is a TypeScript error. Non-copy data (prices, ids, colours, frequencies, ranges) sits in `src/content/data.ts`. Rich text uses a tiny safe token set (`[[em]]`, `[[b]]`, `[[br]]`), never `innerHTML`.
+
+The Latin faces — Bricolage Grotesque and Instrument Serif — do not contain Cyrillic. Russian uses **Onest** (display/body) and **Playfair Display** (serif italic), both with Cyrillic subsets via Fontsource; JetBrains Mono already supports Cyrillic and is shared. `html[lang="ru"]` swaps the CSS variables and tunes the wordmark scale; the English composition is otherwise untouched.
+
 ## Stack
 
 - **Vite + React 19 + TypeScript**

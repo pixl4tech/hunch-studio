@@ -454,6 +454,9 @@
   }
 }
 @media (max-width: 640px) {
+  .ledger__tickets {
+    max-width: 100%;
+  }
   .ledger__title {
     font-size: clamp(44px, 13.6vw, 84px);
   }

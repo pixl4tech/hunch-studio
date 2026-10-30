@@ -87,7 +87,7 @@
   color: var(--muted);
 }
 .signoff__subword::after {
-  content: "Rotterdam / est. 2023";
+  content: attr(data-place);
   letter-spacing: 0.16em;
 }
 

@@ -13,13 +13,13 @@ export function useReducedMotion() {
   return reduced;
 }
 
-export function useNow(timeZone: string) {
+export function useNow(timeZone: string, locale = "en-GB") {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(id);
   }, []);
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat(locale, {
     timeZone,
     hour: "2-digit",
     minute: "2-digit",
