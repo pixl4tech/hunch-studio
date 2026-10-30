@@ -171,8 +171,12 @@ export function InkTrail({ enabled }: { enabled: boolean }) {
     let lastDraw = 0;
     let lastInk = 0;
     let stopTick: (() => void) | null = null;
+    let clearTimer = 0;
+    let fadeStarted = false;
 
     const clear = () => {
+      window.clearTimeout(clearTimer);
+      clearTimer = 0;
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       pts.length = 0;
       canvas.style.display = "none";
@@ -180,9 +184,26 @@ export function InkTrail({ enabled }: { enabled: boolean }) {
 
     const ensureLoop = () => {
       if (stopTick) return;
+      canvas.style.transition = "none";
+      canvas.style.opacity = "0.5";
       canvas.style.display = "block";
       const tick = (t: number) => {
-        // Dissolve gradually; the hard clear below guarantees no ghost layer.
+        const age = t * 1000 - lastInk;
+        if (age >= 3000 && !fadeStarted) {
+          // The pigment is already dissolving; now fade the whole layer too,
+          // so no transparent ghost can sit on the page.
+          fadeStarted = true;
+          canvas.style.transition = "opacity 6s linear";
+          canvas.style.opacity = "0";
+        }
+        if (age >= 6000) {
+          stopTick?.();
+          stopTick = null;
+          clearTimer = window.setTimeout(clear, 4500);
+          return;
+        }
+
+        // Dissolve gradually while the ink is still visible.
         ctx.globalCompositeOperation = "destination-out";
         ctx.fillStyle = "rgba(0,0,0,0.035)";
         ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
@@ -215,12 +236,6 @@ export function InkTrail({ enabled }: { enabled: boolean }) {
           }
         }
 
-        // 12 s after the last stroke: remove the layer completely and stop.
-        if (t * 1000 - lastInk > 12_000) {
-          clear();
-          stopTick?.();
-          stopTick = null;
-        }
       };
       stopTick = onTick(tick);
     };
@@ -230,6 +245,13 @@ export function InkTrail({ enabled }: { enabled: boolean }) {
       if (now - lastMove < 8) return;
       lastMove = now;
       lastInk = now;
+      fadeStarted = false;
+      if (clearTimer) {
+        window.clearTimeout(clearTimer);
+        clearTimer = 0;
+      }
+      canvas.style.transition = "none";
+      canvas.style.opacity = "0.5";
       ensureLoop();
       const dx = e.clientX - px;
       const dy = e.clientY - py;
