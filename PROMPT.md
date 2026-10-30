@@ -67,9 +67,86 @@ Functional changes only; docs/metadata from this commit are excluded below.
 - Icon: riso-misregistered H (ink square, bone H, orange/cobalt offsets, lime dot) as icon.svg + 180 px touch icon, linked in index.html.
 ```
 
-## 3. Excluded
+## 3. Post-release refinements
+
+The **functional** history currently ends at [`a675887`](https://github.com/pixl4tech/hunch-studio/commit/a6758879e11e4cca6c57845fde1c370650f3c594) — the ink-layer fade. The commit immediately after this document update is documentation only.
+
+### `efd7963` — Document the prompt history
+
+[Commit](https://github.com/pixl4tech/hunch-studio/commit/efd7963213820a3fb219f06a6051f1fc13d1a6a8)
+
+Documentation only: this file was rewritten so the one-shot brief points at the first commit and every functional commit has a terse reproduction prompt.
+
+### `22fe618` — Record session token usage
+
+[Commit](https://github.com/pixl4tech/hunch-studio/commit/22fe6189ed6358dba3a133d77626377d52b6f39c)
+
+Documentation/UI credit only. Added a cumulative session block to the README colophon and the Sign-Off credits:
+
+```text
+prompt tokens read   1,272,527   @ 483 tok/s   (89,602,204 reused)
+tokens written         818,340   @ 42.1 tok/s
+```
+
+### `d424f1a` — Match the model credit to the colophon body style
+
+[Commit](https://github.com/pixl4tech/hunch-studio/commit/d424f1a20100dda91d57d387297141159db555fa)
+
+Visual fix only: `.signoff__col p` had higher specificity, so the model credit rendered at 13.5 px display instead of 7.5 px mono. It now uses `.signoff__sm` plus a small top margin — same size, font, colour and line-height as the other colophon text.
+
+### `b2a4d11` — EN / RU localisation, AI-native copy, Cyrillic type
+
+[Commit](https://github.com/pixl4tech/hunch-studio/commit/b2a4d11d1d8bcb880ee485795de6bff301b8f151)
+
+```text
+- Add a typed i18n layer: en.ts is the source of truth; ru.ts is checked against Content.
+- Move every client string into dictionaries: copy, data arrays, aria/title/placeholder, mailto drafts, meta, CSS text. Keep ids, prices, colours, frequencies and ranges in content/data.
+- Locale resolution: ?lang > localStorage > en. Add Language to the dock Settings popover; switching updates UI, URL (replaceState, hash preserved), html lang, title/meta and fonts immediately. Persist the explicit URL locale.
+- Rewrite EN around a clearer AI-native web studio: interface, intelligence (LLM/RAG/agents), data, reliability; tie every plate to a capability, process step, engagement or proof.
+- Adapt RU rather than translating literally: keep industry terms in English, bilingual plate names in contents and short RU labels in the dock, Intl numbers/currency, Onest + Playfair Display for Cyrillic, RU-specific wordmark and ledger scaling.
+```
+
+### `88df661` — Fade the ink trail, cut idle render work
+
+[Commit](https://github.com/pixl4tech/hunch-studio/commit/88df6611d5a3ec86ba2c8f1f9c76381c7295537f)
+
+```text
+- InkTrail: lazy rAF, only while ink exists; stop clearing a full-screen canvas in idle; DPR 2→1.5; initial 12 s hard clear.
+- Seismograph: pause offscreen via IntersectionObserver, cap at 30 fps, cache its rect, DPR 1.5.
+- 3D organism: DPR 2→1.5 desktop and 1.25 on narrow screens.
+- Custom cursor: settle and stop the rAF loop when idle; Sign-Off misprint pauses when offscreen.
+- Audit: Signal's tick hot spot 439→122 hits at idle and 0 when offscreen; FPS stays 60.
+```
+
+### `f207848` — Turn off the settings-panel shadow
+
+[Commit](https://github.com/pixl4tech/hunch-studio/commit/f20784842d6a6e7f251ea7e063a2b872882c60bc)
+
+```text
+- Remove box-shadow from the dock Settings panel; keep the dark background, hairline border and lime top rule.
+```
+
+### `a7ce767` — Let the cursor settle while held
+
+[Commit](https://github.com/pixl4tech/hunch-studio/commit/a7ce7671a22b783399b20396bc82551534235b03)
+
+```text
+- The cursor loop may stop as soon as it reaches the pointer, even with the button held; pointer events restart it when needed.
+```
+
+### `a675887` — Fade the ink canvas itself, not just the pigment
+
+[Commit](https://github.com/pixl4tech/hunch-studio/commit/a6758879e11e4cca6c57845fde1c370650f3c594)
+
+```text
+- Start a 6 s opacity fade on the ink canvas at 3 s, stop the rAF loop at 6 s, and clear/hide the node at 10.5 s.
+- The layer is invisible by ~9 s: no faint transparent ghost and no abrupt pop at the hard clear.
+```
+
+## 4. Excluded
 
 | Commit | Reason |
 | --- | --- |
 | [`d877f10`](https://github.com/pixl4tech/hunch-studio/commit/d877f10eb5892a3b9901bbee22e4f786fb84f959) | README live link + `.gitignore` — docs/deploy only. |
 | Docs in `1d777e9` | README, PROMPT.md, UI-SOUNDS.md, model colophon, `meta generator`. |
+| `efd7963`, `22fe618`, `d424f1a` | Documentation/colophon/credit only; recorded above for history, no functional prompt. |
