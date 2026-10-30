@@ -15,7 +15,6 @@
  */
 
 import {
-  LAST_BEAT,
   SCORE,
   SEC_PER_BEAT,
   midiToHz,
@@ -57,30 +56,58 @@ export class FuguePlayer {
     this.ctx = ctx;
 
     const master = ctx.createGain();
-    master.gain.value = 1.3;
+    master.gain.value = 1.2;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -18;
     comp.knee.value = 22;
     comp.ratio.value = 3.4;
     comp.attack.value = 0.006;
     comp.release.value = 0.28;
+    // Safety limiter: catches the rare convolution transient, leaves the body alone.
+    const limit = ctx.createDynamicsCompressor();
+    limit.threshold.value = -1.5;
+    limit.knee.value = 0;
+    limit.ratio.value = 20;
+    limit.attack.value = 0.002;
+    limit.release.value = 0.12;
+    // Transparent soft ceiling: only the rare convolution spikes touch it.
+    const shaper = ctx.createWaveShaper();
+    const curve = new Float32Array(2048);
+    for (let i = 0; i < 2048; i++) {
+      const x = i / 1023.5 - 1;
+      curve[i] = (0.85 * Math.tanh(x * 1.15)) / Math.tanh(1.15);
+    }
+    shaper.curve = curve;
+    shaper.oversample = "2x";
     master.connect(comp);
-    comp.connect(ctx.destination);
+    comp.connect(limit);
+    limit.connect(shaper);
+    shaper.connect(ctx.destination);
     this.master = master;
 
-    // A 2.1 s synthetic room. Cheap, deterministic, and it makes five plain
+    // A 1.7 s synthetic room. Cheap, deterministic, and it makes five plain
     // oscillators sound like five instruments in one studio.
     const len = Math.max(1, Math.floor(ctx.sampleRate * 1.7));
     const ir = ctx.createBuffer(2, len, ctx.sampleRate);
     let energy = 0;
+    let seed = 0x1a2b3c4d;
+    const rnd = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const smooth = 1 - Math.exp((-2 * Math.PI * 4200) / ctx.sampleRate);
     for (let ch = 0; ch < 2; ch++) {
       const data = ir.getChannelData(ch);
+      let lp = 0;
       for (let i = 0; i < len; i++) {
         const t = i / len;
         const attack = i < 96 ? i / 96 : 1;
-        const v = (Math.random() * 2 - 1) * Math.pow(1 - t, 3.1) * attack;
-        data[i] = v;
-        energy += v * v;
+        const raw = (rnd() * 2 - 1) * Math.pow(1 - t, 3.1) * attack;
+        lp += smooth * (raw - lp);
+        data[i] = lp;
+        energy += lp * lp;
       }
     }
     // Normalise the tail: without this a 2 s noise IR multiplies the wet bus
@@ -104,15 +131,11 @@ export class FuguePlayer {
     const noiseLen = Math.floor(ctx.sampleRate * 1.2);
     const noise = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
     const nd = noise.getChannelData(0);
-    for (let i = 0; i < noiseLen; i++) nd[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < noiseLen; i++) nd[i] = rnd() * 2 - 1;
     this.noise = noise;
 
     if (this.injected && "resume" in ctx) void (ctx as AudioContext).resume().catch(() => {});
     return true;
-  }
-
-  get ready(): boolean {
-    return this.ctx !== null;
   }
 
   now(): number {
@@ -185,11 +208,6 @@ export class FuguePlayer {
     this.current = null;
   }
 
-  /** Seconds of music, incl. the last tail. Used by the harness. */
-  get pieceSeconds(): number {
-    return LAST_BEAT * SEC_PER_BEAT;
-  }
-
   private openBus(life: number): GainNode {
     const ctx = this.ctx!;
     const bus = ctx.createGain();
@@ -228,6 +246,9 @@ export class FuguePlayer {
 
   private amp(when: number, peak: number, attack: number, decay: number): GainNode {
     const g = this.ctx!.createGain();
+    // A GainNode defaults to 1. If a source starts on the same sample as the
+    // first automation event, one full-scale sample can slip through.
+    g.gain.value = 0;
     g.gain.setValueAtTime(0.0001, when);
     g.gain.exponentialRampToValueAtTime(Math.max(0.0003, peak), when + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, when + decay);
@@ -262,8 +283,16 @@ export class FuguePlayer {
         lp.type = "lowpass";
         lp.frequency.value = 3400;
         lp.Q.value = 0.4;
-        const release = Math.min(2.6, Math.max(0.8, d * 0.8 + 0.7));
-        const env = this.amp(when, n.vel * 0.24, 0.013, release);
+        // A held felt note keeps a little sustain until its written end, then
+        // releases. The old single decay cut the 9.8-beat Listen pedal at 2.6 s.
+        const peak = n.vel * 0.17;
+        const sustain = Math.max(0.0004, peak * 0.3);
+        const env = ctx.createGain();
+        env.gain.value = 0;
+        env.gain.setValueAtTime(0.0001, when);
+        env.gain.exponentialRampToValueAtTime(peak, when + 0.013);
+        env.gain.exponentialRampToValueAtTime(sustain, when + Math.max(0.35, d * 0.9));
+        env.gain.exponentialRampToValueAtTime(0.0001, when + d + 1.3);
         const o1 = ctx.createOscillator();
         o1.type = "triangle";
         o1.frequency.value = f;
@@ -290,8 +319,8 @@ export class FuguePlayer {
         nz.stop(when + 0.09);
         o1.start(when);
         o2.start(when);
-        o1.stop(when + release + 0.1);
-        o2.stop(when + release + 0.1);
+        o1.stop(when + d + 1.4);
+        o2.stop(when + d + 1.4);
         return { out, wet: 0.42 };
       }
 
@@ -422,6 +451,7 @@ export class FuguePlayer {
         lp.frequency.value = 620;
         lp.Q.value = 0.7;
         const env = ctx.createGain();
+        env.gain.value = 0;
         const peak = n.vel * 0.26;
         env.gain.setValueAtTime(0.0001, when);
         env.gain.linearRampToValueAtTime(peak, when + 0.55);
@@ -478,6 +508,7 @@ export class FuguePlayer {
         bp.frequency.setValueAtTime(420, when);
         bp.frequency.exponentialRampToValueAtTime(2600, when + d * 0.8);
         const env = ctx.createGain();
+        env.gain.value = 0;
         env.gain.setValueAtTime(0.0001, when);
         env.gain.linearRampToValueAtTime(n.vel * 0.05, when + d * 0.45);
         env.gain.linearRampToValueAtTime(0.0001, when + d);

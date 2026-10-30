@@ -67,7 +67,7 @@ const listen: Note[] = SUBJECT.map((pitch, i) =>
 );
 // A low F pedal under the whole movement: the room tone, not a bassline.
 // It is the only thing on the floor while we listen.
-listen.push(note(0.15, 53, 9.8, 0.18, "felt"));
+listen.push(note(0.15, 53, 9.8, 0.12, "felt"));
 
 /* ------------------------------------------------------------------ *
  * II — LOOP. The head of the subject, stuck on repeat. Clicks, not phrases.
