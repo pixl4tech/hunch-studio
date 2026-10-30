@@ -1191,7 +1191,7 @@ html.cursor-on * {
   padding: 12px 12px 10px;
   background: #0d0c0a;
   border: 1px solid rgba(238, 231, 215, 0.22);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 2px;
