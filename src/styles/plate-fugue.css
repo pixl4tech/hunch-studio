@@ -160,6 +160,27 @@
   touch-action: pan-y;
   cursor: ew-resize;
 }
+.fugue__timeline:focus-visible {
+  outline: 1px solid var(--lime);
+  outline-offset: 5px;
+}
+.fugue__clock {
+  margin-left: 2px;
+  border-left: 1px solid var(--rule);
+  padding-left: 10px;
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(238, 231, 215, 0.5);
+  white-space: nowrap;
+}
+.fugue__head-note b {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.84em;
+  letter-spacing: 0.02em;
+  color: var(--lime);
+}
 .fugue__ruler {
   position: relative;
   height: 42px;
@@ -186,6 +207,10 @@
   font-weight: 400;
   color: var(--muted);
   letter-spacing: 0.08em;
+}
+.fugue__tick.is-end b {
+  left: auto;
+  right: 4px;
 }
 .fugue__ruler-label {
   position: absolute;
@@ -227,21 +252,57 @@
 }
 .fugue__note {
   position: absolute;
-  height: 7px;
-  border-radius: 1px;
-  background: rgba(238, 231, 215, 0.5);
-  transform-origin: 0 50%;
+  height: 1px;
+  background: rgba(238, 231, 215, 0.16);
   transition:
     background-color 0.3s,
-    transform 0.3s var(--snap),
-    box-shadow 0.3s;
+    opacity 0.3s;
 }
-.stave-track.is-on .fugue__note {
+.fugue__note::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: -3px;
+  width: 9px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(238, 231, 215, 0.48);
+  transform: rotate(-16deg);
+  transition:
+    background-color 0.25s,
+    box-shadow 0.3s,
+    transform 0.25s var(--snap);
+}
+.fugue__note::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  bottom: 1px;
+  width: 1px;
+  height: 12px;
+  background: rgba(238, 231, 215, 0.34);
+  transition: background-color 0.25s;
+}
+.fugue__note.is-high::after {
+  bottom: auto;
+  top: 1px;
+}
+.stave-track.is-on .fugue__note::before {
+  background: rgba(238, 231, 215, 0.9);
+}
+.stave-track.is-on .fugue__note::after {
+  background: rgba(238, 231, 215, 0.55);
+}
+.fugue__note.is-sung::before {
   background: var(--lime);
-  box-shadow: 0 0 14px rgba(216, 255, 69, 0.35);
+  box-shadow: 0 0 12px rgba(216, 255, 69, 0.75);
+  transform: rotate(-16deg) scale(1.2);
 }
-.stave-track.is-on .fugue__note:nth-child(odd) {
-  transform: scaleY(1.35);
+.fugue__note.is-sung::after {
+  background: var(--lime);
+}
+.fugue__note.is-sung {
+  background: rgba(216, 255, 69, 0.45);
 }
 .stave-track.is-solo {
   background: rgba(216, 255, 69, 0.03);
@@ -453,6 +514,14 @@
   text-transform: uppercase;
   line-height: 0.9;
 }
+.movement__voice {
+  font-size: 7.5px;
+  line-height: 1.7;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(238, 231, 215, 0.5);
+  max-width: 52ch;
+}
 .movement__statement {
   font-family: var(--serif);
   font-style: italic;
@@ -559,6 +628,16 @@
   }
   .stave-label__roman {
     font-size: 11px;
+  }
+  .fugue__note::before {
+    width: 6px;
+    height: 4.5px;
+    left: -1px;
+    top: -2px;
+  }
+  .fugue__note::after {
+    left: 3px;
+    height: 9px;
   }
   .fugue__labels-head,
   .fugue__ruler {
