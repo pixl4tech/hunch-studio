@@ -332,6 +332,7 @@ export function PatchBay() {
               key={p.name}
               type="button"
               className="patch__preset"
+              data-sfx="relay"
               onClick={() => {
                 setConns(p.conns.map(([from, to]) => ({ from, to })));
                 setArmed(null);
@@ -343,6 +344,7 @@ export function PatchBay() {
           <button
             type="button"
             className="patch__preset patch__preset--clear"
+            data-sfx="plug"
             onClick={() => {
               setConns([]);
               setArmed(null);
@@ -391,6 +393,7 @@ export function PatchBay() {
                       armed === n.id ? " is-armed" : ""
                     }`}
                     data-jack={n.id}
+                    data-sfx="plug"
                     aria-pressed={armed === n.id || connected}
                     aria-label={`Need: ${n.label}. ${connected ? "Connected." : "Select to patch."}`}
                     onPointerDown={(e) => onJackDown(e, n.id)}
@@ -427,6 +430,7 @@ export function PatchBay() {
                       armed === s.id ? " is-armed" : ""
                     }`}
                     data-jack={s.id}
+                    data-sfx="plug"
                     aria-pressed={armed === s.id || connected}
                     aria-label={`System: ${s.label}. ${connected ? "Connected." : "Select to patch."}`}
                     onPointerDown={(e) => onJackDown(e, s.id)}
@@ -474,6 +478,7 @@ export function PatchBay() {
                     <path
                       d={d}
                       className="cable__hit"
+                      data-sfx="plug"
                       onClick={() => removeCable(c)}
                       data-cursor="CUT THE CABLE"
                     />
@@ -560,10 +565,10 @@ export function PatchBay() {
               line doesn’t make you feel something, cut the cable.
             </p>
             <div className="patch__actions">
-              <button type="button" className="btn btn--fill btn--sm" onClick={takeToBench}>
+              <button type="button" className="btn btn--fill btn--sm" data-sfx="paper" onClick={takeToBench}>
                 Take it to the bench <span className="arw">↗</span>
               </button>
-              <button type="button" className="btn btn--ghost btn--sm" onClick={copySpec}>
+              <button type="button" className="btn btn--ghost btn--sm" data-sfx="success" onClick={copySpec}>
                 {copied ? "Copied ✓" : "Copy the spec"}
               </button>
             </div>

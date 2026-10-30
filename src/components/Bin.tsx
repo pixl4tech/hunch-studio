@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { playSfx } from "../lib/sfx";
 
 type BinItem = {
   title: string;
@@ -127,9 +128,11 @@ export function Bin() {
       if (!drag.current.down) return;
       const dx = e.clientX - drag.current.x;
       drag.current.moved = Math.max(drag.current.moved, Math.abs(dx));
+      if (drag.current.moved > 2) playSfx("paperDrag");
       el.scrollLeft = drag.current.left - dx;
     };
     const onUp = () => {
+      if (drag.current.moved > 10) playSfx("paper");
       drag.current.down = false;
       el.style.cursor = "";
     };
@@ -205,10 +208,10 @@ export function Bin() {
             <span className="bin__hint mono">Drag ↔ or click a card to flip</span>
           </div>
           <div className="bin__nav">
-            <button type="button" className="bin__arrow" onClick={() => nudge(-1)} aria-label="Previous specimen">
+            <button type="button" className="bin__arrow" data-sfx="tick" onClick={() => nudge(-1)} aria-label="Previous specimen">
               ←
             </button>
-            <button type="button" className="bin__arrow" onClick={() => nudge(1)} aria-label="Next specimen">
+            <button type="button" className="bin__arrow" data-sfx="tick" onClick={() => nudge(1)} aria-label="Next specimen">
               →
             </button>
           </div>
@@ -220,6 +223,7 @@ export function Bin() {
               key={item.title}
               type="button"
               className="bin-card"
+              data-sfx="paper"
               style={{ "--tilt": `${tilts[i]}deg`, "--drop": `${drops[i]}px` } as CSSProperties}
               aria-pressed={flipped === i}
               aria-label={`${item.title}, ${item.version}. Flip to read the autopsy.`}

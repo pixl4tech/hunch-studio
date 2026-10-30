@@ -73,11 +73,11 @@ listen.push(note(0.15, 53, 9.8, 0.12, "felt"));
  * II — LOOP. The head of the subject, stuck on repeat. Clicks, not phrases.
  * ------------------------------------------------------------------ */
 const loop: Note[] = [];
-const LOOP_A = [65, 69, 72, 69];
+const LOOP_A = [65, 72, 69, 72];
 for (let i = 0; i < 12; i++) {
   loop.push(note(5.6 + i * 0.5, LOOP_A[i % 4], 0.4, i % 4 === 0 ? 0.6 : 0.36, "pluck"));
 }
-const LOOP_B = [65, 69, 72, 74, 72, 69];
+const LOOP_B = [65, 72, 74, 72, 65, 72];
 for (let i = 0; i < 11; i++) {
   const beat = 11.6 + i * 0.5;
   // One dropped click, sixteenth 7 — the loop breathing, not a machine.
@@ -102,12 +102,12 @@ const LASH_BASS: [number, number][] = [
   [26, 41],
 ];
 LASH_BASS.forEach(([beat, pitch], i) =>
-  lash.push(note(beat, pitch, i === LASH_BASS.length - 1 ? 1.1 : 1.85, 0.3, "sub")),
+  lash.push(note(beat, pitch, i === LASH_BASS.length - 1 ? 1.1 : 1.85, i < 3 ? 0.24 : 0.3, "sub")),
 );
 
 const LASH_RIFF_1 = [...SUBJECT].reverse(); // G A Bb C A F
 LASH_RIFF_1.forEach((pitch, i) =>
-  lash.push(note(12.5 + i * 0.45, pitch, 0.34, i === 3 ? 0.62 : 0.44, "lash")),
+  lash.push(note(12.5 + i * 0.45, pitch, 0.34, i === 3 ? 0.52 : 0.36, "lash")),
 );
 
 // One low F under the breath between the two phrases: the floor never leaves.
@@ -119,13 +119,13 @@ LASH_RIFF_2.forEach((pitch, i) =>
 );
 
 // The build: four notes, twice, then the E♭ on top.
-const LASH_BUILD = [65, 69, 70, 72, 65, 69, 70, 72, 75];
+const LASH_BUILD = [65, 69, 70, 72, 65, 69, 70, 72, 74];
 LASH_BUILD.forEach((pitch, i) =>
   lash.push(note(20 + i * 0.5, pitch, 0.36, 0.42 + i * 0.035, "lash")),
 );
 
 // The tear: the whole subject falls off the table.
-const LASH_TEAR = [77, 75, 74, 72, 70, 69];
+const LASH_TEAR = [77, 76, 74, 72, 70, 69];
 LASH_TEAR.forEach((pitch, i) =>
   lash.push(note(24.5 + i * 0.42, pitch, 0.34, 0.74 - i * 0.055, "lash")),
 );
@@ -166,17 +166,19 @@ lift.push(note(28.0, 84, 1.6, 0.24, "bell"));
  * hurry. The unresolved G from Listen is finally allowed to fall to F.
  * ------------------------------------------------------------------ */
 const lull: Note[] = [
-  note(26.8, 53, 3.2, 0.15, "pad"),
-  note(26.8, 57, 3.2, 0.12, "pad"),
-  note(26.8, 60, 3.2, 0.11, "pad"),
-  note(26.8, 64, 3.2, 0.09, "pad"),
+  // A suspended F: no A, no E, so the melody can hold Bb without a semitone
+  // cluster. The 3rd arrives only at the final resolution.
+  note(26.8, 53, 3.4, 0.15, "pad"),
+  note(26.8, 60, 3.4, 0.11, "pad"),
+  note(26.8, 62, 3.4, 0.09, "pad"),
+  note(26.8, 67, 3.4, 0.095, "pad"),
   note(30.0, 53, 1.4, 0.13, "pad"),
-  note(30.0, 57, 1.4, 0.11, "pad"),
   note(30.0, 60, 1.4, 0.1, "pad"),
   note(30.0, 67, 1.4, 0.09, "pad"),
-  note(31.2, 53, 2.2, 0.14, "pad"),
-  note(31.2, 57, 2.2, 0.11, "pad"),
-  note(31.2, 60, 2.2, 0.1, "pad"),
+  note(31.2, 53, 2.4, 0.15, "pad"),
+  note(31.2, 57, 2.4, 0.115, "pad"),
+  note(31.2, 60, 2.4, 0.1, "pad"),
+  note(31.2, 67, 2.4, 0.09, "pad"),
 ];
 const LULL_LINE: [number, number, number, number][] = [
   [27.2, 67, 1.0, 0.3],
@@ -190,6 +192,59 @@ const LULL_LINE: [number, number, number, number][] = [
 ];
 LULL_LINE.forEach(([beat, pitch, dur, vel]) => lull.push(note(beat, pitch, dur, vel, "felt")));
 lull.push(note(31.9, 77, 2, 0.11, "bell"));
+
+
+/* ------------------------------------------------------------------ *
+ * THE ROOM. A quiet, continuous chord bed under all five movements,
+ * changing with the week. It gives the overlaps one shared harmony and
+ * lets each entry arrive as a voice over a progression rather than a
+ * separate track. Velocities are low; this is felt, not heard.
+ * ------------------------------------------------------------------ */
+export const HOUSE: Note[] = [
+  // w0 — F add9 without the 3rd: Listen's Bb hangs as a sus4.
+  note(0, 53, 4.5, 0.1, "pad"),
+  note(0, 60, 4.5, 0.09, "pad"),
+  note(0, 67, 4.5, 0.07, "pad"),
+  // w1 — F add9: Listen's G and the Loop's A/C/F all sit inside.
+  note(4, 53, 4.5, 0.1, "pad"),
+  note(4, 57, 4.5, 0.08, "pad"),
+  note(4, 60, 4.5, 0.085, "pad"),
+  note(4, 67, 4.5, 0.065, "pad"),
+  // w2 — Dm7 under the Loop, with Listen's G as the 11th.
+  note(8, 50, 4.5, 0.1, "pad"),
+  note(8, 53, 4.5, 0.08, "pad"),
+  note(8, 57, 4.5, 0.075, "pad"),
+  note(8, 60, 4.5, 0.065, "pad"),
+  // w3 — Bb maj7: both the Loop's F/C/D and Lash's G/A/Bb are consonant.
+  note(12, 46, 4.5, 0.1, "pad"),
+  note(12, 53, 4.5, 0.085, "pad"),
+  note(12, 57, 4.5, 0.075, "pad"),
+  note(12, 62, 4.5, 0.06, "pad"),
+  // w4 — F7: Lash's borrowed Eb is the seventh, not an accident.
+  note(16, 41, 4.5, 0.095, "pad"),
+  note(16, 48, 4.5, 0.085, "pad"),
+  note(16, 57, 4.5, 0.07, "pad"),
+  note(16, 63, 4.5, 0.055, "pad"),
+  // w5 — F add9 under the build and Lift.
+  note(20, 41, 4.5, 0.095, "pad"),
+  note(20, 48, 4.5, 0.08, "pad"),
+  note(20, 57, 4.5, 0.07, "pad"),
+  note(20, 67, 4.5, 0.06, "pad"),
+  // w6 — Fmaj7 under the tear, while Lull is still below.
+  note(24, 41, 3.8, 0.095, "pad"),
+  note(24, 57, 3.8, 0.075, "pad"),
+  note(24, 60, 3.8, 0.07, "pad"),
+  note(24, 64, 3.8, 0.055, "pad"),
+  // w7 — F sus: no 3rd, so Lull's Bb is a suspension, not a cluster.
+  note(28, 41, 3.2, 0.095, "pad"),
+  note(28, 48, 3.2, 0.08, "pad"),
+  note(28, 55, 3.2, 0.07, "pad"),
+  // Resolution — the 3rd arrives with the last F.
+  note(31.2, 41, 2.4, 0.095, "pad"),
+  note(31.2, 57, 2.4, 0.075, "pad"),
+  note(31.2, 60, 2.4, 0.07, "pad"),
+  note(31.2, 67, 2.4, 0.06, "pad"),
+];
 
 export const SCORE: Record<MovementId, Note[]> = { listen, loop, lash, lift, lull };
 

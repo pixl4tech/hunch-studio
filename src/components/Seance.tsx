@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { playSfx } from "../lib/sfx";
 
 type Channel = {
   no: string;
@@ -113,7 +114,10 @@ export function Seance() {
 
   const tune = (next: number, byUser = true) => {
     const n = (next + CHANNELS.length) % CHANNELS.length;
-    if (byUser) setScan(false);
+    if (byUser) {
+      setScan(false);
+      playSfx("dial");
+    }
     if (n === idx) return;
     setIdx(n);
     setTuning(true);
@@ -244,6 +248,7 @@ export function Seance() {
               onPointerUp={onDialUp}
               onPointerCancel={onDialUp}
               onKeyDown={onDialKey}
+              data-sfx="dial"
               data-cursor="TURN THE DIAL"
             >
               <svg className="receiver__face" viewBox="0 0 300 300" aria-hidden="true">
@@ -342,6 +347,7 @@ export function Seance() {
               <button
                 type="button"
                 className="receiver__btn receiver__btn--scan"
+                data-sfx="relay"
                 onClick={() => setScan((s) => !s)}
                 aria-pressed={scan}
               >

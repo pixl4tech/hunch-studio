@@ -177,7 +177,7 @@ export function Signal() {
                 <span className="dot-live" />
                 Accepting one build for February · Two desks · Zero decks
               </p>
-              <button type="button" className="signal__inline" onClick={() => scrollTo("#bench")}>
+              <button type="button" className="signal__inline" data-sfx="page" onClick={() => scrollTo("#bench")}>
                 Start a hunch <span aria-hidden="true">↗</span>
               </button>
             </div>
@@ -192,6 +192,7 @@ export function Signal() {
                   key={p.id}
                   type="button"
                   className="contents__row"
+                  data-sfx="tick"
                   aria-current={i === 0}
                   onClick={() => scrollTo(`#${p.id}`)}
                 >
@@ -231,6 +232,7 @@ export function Signal() {
             <button
               type="button"
               className="btn btn--fill"
+              data-sfx="page"
               onClick={() => scrollTo("#bench")}
               data-cursor="OPEN A LINE"
             >
@@ -239,6 +241,7 @@ export function Signal() {
             <button
               type="button"
               className="btn btn--ghost"
+              data-sfx="tick"
               onClick={() => scrollTo("#bin")}
               data-cursor="EVIDENCE"
             >

@@ -7,6 +7,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { onTick } from "../lib/ticker";
+import { getMusicPlayer } from "../lib/music";
+import { playSfx } from "../lib/sfx";
 import { FuguePlayer } from "../lib/fugueAudio";
 import {
   BEATS_PER_WEEK,
@@ -142,7 +144,13 @@ function ScoreRuler() {
 
 type Run = { from: number; to: number; start: number };
 
-export function Fugue() {
+export function Fugue({
+  soundOn,
+  onEnableSound,
+}: {
+  soundOn: boolean;
+  onEnableSound: () => void;
+}) {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(2.6 / TOTAL_WEEKS);
   const [solo, setSolo] = useState<MovementId | null>(null);
@@ -153,6 +161,14 @@ export function Fugue() {
   const runRef = useRef<Run | null>(null);
   const prevActive = useRef("");
   const dragging = useRef(false);
+
+  useEffect(() => {
+    if (soundOn) return;
+    playerRef.current?.stop();
+    setMode("idle");
+    setHeld(false);
+    setSound(false);
+  }, [soundOn]);
 
   const player = () => {
     if (!playerRef.current) playerRef.current = new FuguePlayer();
@@ -193,6 +209,13 @@ export function Fugue() {
     return stop;
   }, [mode]);
 
+  /** The Fugue owns the room while it plays; HUNCH FM steps aside. */
+  useEffect(() => {
+    const music = getMusicPlayer();
+    if (mode !== "idle") music.duck();
+    else music.release();
+  }, [mode]);
+
   /** Entries while the needle is dragged across a new movement. */
   useEffect(() => {
     const prev = prevActive.current ? prevActive.current.split(",") : [];
@@ -202,10 +225,15 @@ export function Fugue() {
     }
     const fresh = activeKey.split(",").filter((id) => id && !prev.includes(id));
     fresh.forEach((id) => player().entry(id as MovementId));
+    if (fresh.length) getMusicPlayer().duckFor(2.6);
     prevActive.current = activeKey;
   }, [activeKey, mode, sound]);
 
   const audition = (stage: Stage) => {
+    if (!soundOn) {
+      onEnableSound();
+      playSfx("tick");
+    }
     const p = player();
     if (!p.ensure()) return;
     setSound(true);
@@ -214,7 +242,7 @@ export function Fugue() {
     setPos(stage.start / TOTAL_WEEKS);
     const from = stage.start * BEATS_PER_WEEK;
     const to = stage.end * BEATS_PER_WEEK;
-    const res = p.play([stage.id], from);
+    const res = p.play([stage.id], from, 0.14, to);
     if (!res) {
       setMode("idle");
       return;
@@ -224,6 +252,10 @@ export function Fugue() {
   };
 
   const playPiece = () => {
+    if (!soundOn) {
+      onEnableSound();
+      playSfx("transport");
+    }
     const p = player();
     if (mode === "piece") {
       p.stop();
@@ -247,6 +279,10 @@ export function Fugue() {
 
   const toggleSound = () => {
     if (!sound) {
+      if (!soundOn) {
+        onEnableSound();
+        playSfx("switch");
+      }
       player().ensure();
       setSound(true);
       return;
@@ -283,6 +319,7 @@ export function Fugue() {
   };
   const onMove = (e: ReactPointerEvent) => {
     if (!dragging.current) return;
+    playSfx("needle");
     setFromPointer(e.clientX);
   };
   const onUp = () => {
@@ -312,6 +349,7 @@ export function Fugue() {
     else if (e.key === "End") target = TOTAL_WEEKS;
     if (target === null) return;
     e.preventDefault();
+    playSfx("needle");
     nudge(target);
   };
 
@@ -385,6 +423,7 @@ export function Fugue() {
               <button
                 key={s.id}
                 type="button"
+                data-sfx="tick"
                 className={`stave-label${active.some((a) => a.id === s.id) ? " is-on" : ""}${
                   solo === s.id ? " is-solo" : ""
                 }`}
@@ -409,6 +448,7 @@ export function Fugue() {
             onPointerUp={onUp}
             onPointerCancel={onUp}
             onKeyDown={onKey}
+            data-sfx="needle"
             role="slider"
             tabIndex={0}
             aria-label="Score needle, in weeks"
@@ -469,6 +509,7 @@ export function Fugue() {
               <button
                 type="button"
                 className={`fugue__play${mode === "piece" ? " is-playing" : ""}`}
+                data-sfx="transport"
                 onClick={playPiece}
                 aria-pressed={mode === "piece"}
                 title="Play the whole piece: five voices entering where their weeks begin"
@@ -478,10 +519,10 @@ export function Fugue() {
                 </span>
                 {mode === "piece" ? "Stop" : "Play the fugue"}
               </button>
-              <button type="button" className={`fugue__sound${sound ? " is-on" : ""}`} onClick={toggleSound} aria-pressed={sound}>
+              <button type="button" className={`fugue__sound${sound ? " is-on" : ""}`} data-sfx="switch" onClick={toggleSound} aria-pressed={sound}>
                 <span className="fugue__sound-led" /> Sound {sound ? "on" : "off"}
               </button>
-              <button type="button" className="fugue__sound" onClick={reset}>
+              <button type="button" className="fugue__sound" data-sfx="tick" onClick={reset}>
                 Reset
               </button>
             </div>

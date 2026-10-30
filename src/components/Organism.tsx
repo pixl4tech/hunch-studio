@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { onTick } from "../lib/ticker";
 import { clamp, prefersReducedMotion, warmthColor } from "../lib/util";
 import { useVibe } from "../lib/vibe";
+import { playSfx } from "../lib/sfx";
 
 /* A hand-drawn loop, turned into a twisted calligraphic ribbon. */
 function makeBrushGeometry(segments = 340, sides = 8) {
@@ -388,6 +389,7 @@ export function Organism() {
     const onDown = (e: PointerEvent) => {
       dragging = true;
       moved = 0;
+      playSfx("wobble");
       lastX = e.clientX;
       lastY = e.clientY;
     };
@@ -406,6 +408,7 @@ export function Organism() {
       }
     };
     const onUp = () => {
+      if (dragging) playSfx("plop");
       if (dragging && moved < 6) pulse = 1;
       dragging = false;
     };

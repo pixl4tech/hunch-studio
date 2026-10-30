@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Boot, Cursor, Dock, Grain, InkTrail, NextStrip, Rails, type PlateRef } from "./components/chrome";
 import { Signal } from "./components/Signal";
 import { Bin } from "./components/Bin";
@@ -11,19 +11,113 @@ import { SignOff } from "./components/SignOff";
 import { VibeProvider } from "./lib/vibe";
 import { initLenis, lockScroll } from "./lib/scroll";
 import { prefersReducedMotion } from "./lib/util";
+import { getMusicPlayer } from "./lib/music";
+import { playSfx, setSfxEnabled, type SfxName } from "./lib/sfx";
 import { PLATES as PLATE_META } from "./lib/plates";
 
 const PLATES: PlateRef[] = PLATE_META.map(({ id, label, no }) => ({ id, label, no }));
 
+const readPref = (key: string): boolean => {
+  try {
+    return localStorage.getItem(key) === "on";
+  } catch {
+    return false;
+  }
+};
+
+const writePref = (key: string, on: boolean) => {
+  try {
+    localStorage.setItem(key, on ? "on" : "off");
+  } catch {
+    /* private mode */
+  }
+};
+
 export default function App() {
   const [booting, setBooting] = useState(true);
   const [inkOn, setInkOn] = useState(false);
+  const [soundOn, setSoundOn] = useState(() => readPref("hunch:sound"));
+  const [musicOn, setMusicOn] = useState(() => readPref("hunch:music") && readPref("hunch:sound"));
   const [active, setActive] = useState(0);
+  const firstAudioRun = useRef(true);
 
   useEffect(() => {
     initLenis();
     setInkOn(!prefersReducedMotion() && window.matchMedia("(pointer: fine)").matches);
+    if (readPref("hunch:sound") && readPref("hunch:music")) {
+      // A stored "on" still needs a gesture: arm the loop, don't autoplay.
+      getMusicPlayer().arm();
+    }
   }, []);
+
+  useEffect(() => {
+    setSfxEnabled(soundOn);
+  }, [soundOn]);
+
+  /** One delegated gesture map for every element that carries data-sfx. */
+  useEffect(() => {
+    const fire = (target: Element | null) => {
+      const el = target?.closest?.("[data-sfx]");
+      const name = el?.getAttribute("data-sfx") as SfxName | null;
+      if (name) playSfx(name);
+    };
+    const onDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      fire(e.target as Element | null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") fire(e.target as Element | null);
+    };
+    document.addEventListener("pointerdown", onDown, { capture: true });
+    document.addEventListener("keydown", onKey, { capture: true });
+    return () => {
+      document.removeEventListener("pointerdown", onDown, { capture: true });
+      document.removeEventListener("keydown", onKey, { capture: true });
+    };
+  }, []);
+
+  useEffect(() => {
+    if (firstAudioRun.current) {
+      firstAudioRun.current = false;
+      return;
+    }
+    const music = getMusicPlayer();
+    if (soundOn && musicOn) music.setEnabled(true);
+    else music.setEnabled(false);
+  }, [soundOn, musicOn]);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    if (!next) playSfx("switch");
+    setSoundOn(next);
+    setSfxEnabled(next);
+    writePref("hunch:sound", next);
+    if (next) {
+      playSfx("switch");
+    } else {
+      setMusicOn(false);
+      writePref("hunch:music", false);
+    }
+  };
+
+  const toggleMusic = () => {
+    const next = !musicOn;
+    if (next && !soundOn) {
+      setSoundOn(true);
+      setSfxEnabled(true);
+      writePref("hunch:sound", true);
+    }
+    playSfx("switch");
+    setMusicOn(next);
+    writePref("hunch:music", next);
+  };
+
+  const enableSound = () => {
+    if (soundOn) return;
+    setSoundOn(true);
+    setSfxEnabled(true);
+    writePref("hunch:sound", true);
+  };
 
   useEffect(() => {
     lockScroll(booting);
@@ -96,7 +190,7 @@ export default function App() {
           bg="var(--cobalt)"
           fg="var(--bone)"
         />
-        <Fugue />
+        <Fugue soundOn={soundOn} onEnableSound={enableSound} />
         <NextStrip
           no="04"
           label="The Ledger"
@@ -135,7 +229,16 @@ export default function App() {
         <SignOff />
       </main>
 
-      <Dock plates={PLATES} active={active} inkOn={inkOn} onToggleInk={() => setInkOn((v) => !v)} />
+      <Dock
+        plates={PLATES}
+        active={active}
+        inkOn={inkOn}
+        onToggleInk={() => setInkOn((v) => !v)}
+        soundOn={soundOn}
+        musicOn={musicOn}
+        onToggleSound={toggleSound}
+        onToggleMusic={toggleMusic}
+      />
     </VibeProvider>
   );
 }

@@ -1102,6 +1102,152 @@ html.cursor-on * {
   background: var(--lime);
   box-shadow: 0 0 8px var(--lime);
 }
+.dock__music {
+  border-left: 1px solid rgba(238, 231, 215, 0.12);
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-dark);
+  transition: color 0.25s;
+}
+.dock__music:hover {
+  color: var(--bone);
+}
+.dock__music[data-on="true"] {
+  color: var(--bone);
+}
+.dock__music-wave {
+  width: 11px;
+  height: 10px;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+.dock__music-wave i {
+  width: 2px;
+  height: 3px;
+  background: currentColor;
+  opacity: 0.45;
+  transition: opacity 0.25s;
+}
+.dock__music-wave i:nth-child(2) {
+  height: 6px;
+}
+.dock__music-wave i:nth-child(3) {
+  height: 4px;
+}
+.dock__music[data-on="true"] .dock__music-wave i {
+  opacity: 1;
+  animation: dock-wave 1.05s ease-in-out infinite;
+}
+.dock__music[data-on="true"] .dock__music-wave i:nth-child(2) {
+  animation-delay: -0.35s;
+}
+.dock__music[data-on="true"] .dock__music-wave i:nth-child(3) {
+  animation-delay: -0.7s;
+}
+@keyframes dock-wave {
+  0%,
+  100% {
+    height: 3px;
+  }
+  50% {
+    height: 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock__music[data-on="true"] .dock__music-wave i {
+    animation: none;
+    height: 6px;
+  }
+}
+.dock__audio-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.dock__panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  width: 222px;
+  padding: 12px 12px 10px;
+  background: #0d0c0a;
+  border: 1px solid rgba(238, 231, 215, 0.22);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 5;
+}
+.dock__panel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 2px;
+  background: var(--lime);
+}
+.dock__panel-head {
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(238, 231, 215, 0.16);
+  font-size: 7.5px;
+  letter-spacing: 0.16em;
+  color: var(--muted-dark);
+}
+.dock__opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-dark);
+  transition: color 0.2s;
+}
+.dock__opt:hover {
+  color: var(--bone);
+}
+.dock__opt[data-on="true"] {
+  color: var(--bone);
+}
+.dock__opt-led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(238, 231, 215, 0.2);
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s;
+}
+.dock__opt[data-on="true"] .dock__opt-led {
+  background: var(--lime);
+  box-shadow: 0 0 8px var(--lime);
+}
+.dock__panel-note {
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(238, 231, 215, 0.12);
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: var(--muted-dark);
+  opacity: 0.75;
+}
+@media (max-width: 560px) {
+  .dock__panel {
+    width: 200px;
+  }
+}
 .dock__progress {
   position: fixed;
   left: 0;
@@ -1313,6 +1459,12 @@ html.cursor-on * {
   .dock__ink {
     padding: 0 10px;
     font-size: 8px;
+  }
+  .dock__music {
+    padding: 0 9px;
+  }
+  .dock__music-label {
+    display: none;
   }
   .masthead__strip span:nth-child(2) {
     display: none;

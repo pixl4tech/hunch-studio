@@ -286,7 +286,7 @@ export function Boot({ onDone, onReveal }: { onDone: () => void; onReveal?: () =
       <div className="boot__bottom">
         <span>Press Nº 03 · Two desks · One kettle</span>
         <span>Sound off. Cursor on.</span>
-        <button className="boot__skip" type="button" onClick={finish}>
+        <button className="boot__skip" type="button" data-sfx="whoosh" onClick={finish}>
           Skip the ceremony ↗
         </button>
       </div>
@@ -332,14 +332,40 @@ export function Dock({
   active,
   inkOn,
   onToggleInk,
+  soundOn,
+  musicOn,
+  onToggleSound,
+  onToggleMusic,
 }: {
   plates: PlateRef[];
   active: number;
   inkOn: boolean;
   onToggleInk: () => void;
+  soundOn: boolean;
+  musicOn: boolean;
+  onToggleSound: () => void;
+  onToggleMusic: () => void;
 }) {
   const dockRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLDivElement>(null);
+  const [panel, setPanel] = useState(false);
   const time = useNow("Europe/Amsterdam");
+
+  useEffect(() => {
+    if (!panel) return;
+    const onDown = (e: PointerEvent) => {
+      if (!audioRef.current?.contains(e.target as Node)) setPanel(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPanel(false);
+    };
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [panel]);
 
   useEffect(() => {
     const el = dockRef.current;
@@ -395,6 +421,7 @@ export function Dock({
               key={p.id}
               type="button"
               className="dock__tick"
+              data-sfx="tick"
               aria-current={i === active}
               aria-label={`Plate ${p.no}: ${p.label}`}
               onClick={() => scrollTo(`#${p.id}`)}
@@ -406,6 +433,7 @@ export function Dock({
         <div className="dock__mobile">
           <button
             type="button"
+            data-sfx="page"
             aria-label="Previous plate"
             onClick={() => scrollTo(`#${plates[(active - 1 + plates.length) % plates.length].id}`)}
           >
@@ -416,15 +444,63 @@ export function Dock({
           </span>
           <button
             type="button"
+            data-sfx="page"
             aria-label="Next plate"
             onClick={() => scrollTo(`#${plates[(active + 1) % plates.length].id}`)}
           >
             →
           </button>
         </div>
+        <div className="dock__audio-wrap" ref={audioRef}>
+          <button
+            type="button"
+            className="dock__music"
+            data-on={soundOn}
+            data-sfx="tick"
+            onClick={() => setPanel((p) => !p)}
+            aria-expanded={panel}
+            aria-haspopup="dialog"
+            aria-label="Audio settings"
+            title="Sound and music options"
+          >
+            <span className="dock__music-wave" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+            <span className="dock__music-label">Audio</span>
+          </button>
+          {panel && (
+            <div className="dock__panel" role="dialog" aria-label="Audio options">
+              <div className="dock__panel-head mono">Audio / options</div>
+              <button
+                type="button"
+                className="dock__opt"
+                data-on={soundOn}
+                onClick={onToggleSound}
+                aria-pressed={soundOn}
+              >
+                <span>Sound</span>
+                <span className="dock__opt-led" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="dock__opt"
+                data-on={musicOn}
+                onClick={onToggleMusic}
+                aria-pressed={musicOn}
+              >
+                <span>Music</span>
+                <span className="dock__opt-led" aria-hidden="true" />
+              </button>
+              <p className="dock__panel-note mono">Interface sounds · HUNCH FM</p>
+            </div>
+          )}
+        </div>
         <button
           type="button"
           className="dock__ink"
+          data-sfx="ink"
           data-on={inkOn}
           onClick={onToggleInk}
           aria-pressed={inkOn}
@@ -476,6 +552,7 @@ export function NextStrip({
       type="button"
       className="next-strip"
       style={{ background: bg, color: fg }}
+      data-sfx="page"
       onClick={() => scrollTo(`#${to}`)}
       data-cursor="TURN THE PAGE"
       aria-label={`Next: ${no} ${label}`}

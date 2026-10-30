@@ -15,6 +15,7 @@
  */
 
 import {
+  HOUSE,
   SCORE,
   SEC_PER_BEAT,
   midiToHz,
@@ -147,26 +148,59 @@ export class FuguePlayer {
    * scheduled at once — overlapping movements overlap in sound.
    * Returns the audio-clock start time and the last beat scheduled.
    */
-  play(ids: MovementId[], fromBeat = 0, lead = 0.14): { start: number; endBeat: number } | null {
+  play(
+    ids: MovementId[],
+    fromBeat = 0,
+    lead = 0.14,
+    untilBeat = Number.POSITIVE_INFINITY,
+  ): { start: number; endBeat: number } | null {
     if (!this.ensure()) return null;
     const ctx = this.ctx!;
     this.stop();
 
     const t0 = ctx.currentTime + lead;
     let endBeat = fromBeat;
-    const notes: Note[] = [];
+    const buckets = new Map<string, Note[]>();
+
+    const add = (key: string, n: Note) => {
+      if (n.beat + n.dur < fromBeat) return;
+      // Do not schedule a chord that began before the needle: it would start
+      // in the past and click. The next change covers the gap.
+      if (n.beat < fromBeat - 0.01) return;
+      const list = buckets.get(key) ?? [];
+      list.push(n);
+      buckets.set(key, list);
+      endBeat = Math.max(endBeat, n.beat + n.dur);
+    };
+
+    // The room plays under every audition, so a soloed movement still sits in
+    // the same harmony as the full piece. A chord that began before the
+    // needle is re-struck at the needle, with its remaining length.
+    for (const n of HOUSE) {
+      if (n.beat + n.dur <= fromBeat || n.beat >= untilBeat) continue;
+      const start = Math.max(n.beat, fromBeat);
+      const end = Math.min(n.beat + n.dur, untilBeat);
+      add("house", { ...n, beat: start, dur: end - start });
+    }
     for (const id of ids) {
-      for (const n of SCORE[id]) {
-        if (n.beat + n.dur < fromBeat) continue;
-        notes.push(n);
-        endBeat = Math.max(endBeat, n.beat + n.dur);
-      }
+      for (const n of SCORE[id]) add(id, n);
     }
 
     const life = Math.max(1.6, (endBeat - fromBeat) * SEC_PER_BEAT + 4);
     const bus = this.openBus(life);
-    for (const n of notes) {
-      this.schedule(n, t0 + (n.beat - fromBeat) * SEC_PER_BEAT, bus, 1);
+
+    // Each voice enters through its own short fade, so overlapping movements
+    // arrive as voices rather than as competing tracks.
+    for (const [key, list] of buckets) {
+      const first = Math.min(...list.map((n) => n.beat));
+      const at = t0 + Math.max(0, first - fromBeat) * SEC_PER_BEAT;
+      const group = ctx.createGain();
+      group.gain.setValueAtTime(0.0001, at);
+      group.gain.linearRampToValueAtTime(1, at + (key === "house" ? 1.2 : 0.6));
+      group.connect(bus);
+      for (const n of list) {
+        this.schedule(n, t0 + (n.beat - fromBeat) * SEC_PER_BEAT, group, 1);
+      }
     }
     this.current = bus;
     return { start: t0, endBeat };

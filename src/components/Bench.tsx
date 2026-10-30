@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useVibe, type Tier } from "../lib/vibe";
 import { scrollTo } from "../lib/scroll";
+import { playSfx } from "../lib/sfx";
 
 const EMAIL = "hello@hunch.studio";
 
@@ -42,7 +43,10 @@ function Fader({
           step={0.01}
           value={value}
           aria-label={label}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(Number(e.target.value))}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            playSfx("fader");
+            onChange(Number(e.target.value));
+          }}
         />
       </div>
       <div className="fader__ends mono">
@@ -107,6 +111,7 @@ export function Bench() {
     if (!email.includes("@") || email.length < 5) return setError("That signal looks broken. Try an address with an @ in it.");
     if (message.trim().length < 6) return setError("Give us one sentence. Even a bad one. Especially a bad one.");
     setError("");
+    playSfx("stamp");
     setStatus("sending");
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
@@ -217,10 +222,10 @@ export function Bench() {
             </div>
 
             <div className="tuner__actions">
-              <button type="button" className="tuner__btn" onClick={resetVibe}>
+              <button type="button" className="tuner__btn" data-sfx="switch" onClick={resetVibe}>
                 Reset to house
               </button>
-              <button type="button" className="tuner__btn tuner__btn--hot" onClick={detune}>
+              <button type="button" className="tuner__btn tuner__btn--hot" data-sfx="switch" onClick={detune}>
                 Detune ↯
               </button>
             </div>
@@ -256,15 +261,16 @@ export function Bench() {
                   {patch && <pre>{patch}</pre>}
                 </div>
                 <div className="console__actions">
-                  <a className="btn btn--fill btn--sm" href={mailto}>
+                  <a className="btn btn--fill btn--sm" data-sfx="paper" href={mailto}>
                     Open in mail app <span className="arw">↗</span>
                   </a>
-                  <button type="button" className="btn btn--ghost btn--sm" onClick={copyAddress}>
+                  <button type="button" className="btn btn--ghost btn--sm" data-sfx="success" onClick={copyAddress}>
                     {copied ? "Copied ✓" : `Copy ${EMAIL}`}
                   </button>
                   <button
                     type="button"
                     className="btn btn--ghost btn--sm"
+                    data-sfx="tick"
                     onClick={() => {
                       setStatus("idle");
                       setCode("");
@@ -287,6 +293,7 @@ export function Bench() {
                     <input
                       type="text"
                       value={name}
+                      onKeyDown={() => playSfx("type")}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="first name is plenty"
                       autoComplete="name"
@@ -298,6 +305,7 @@ export function Bench() {
                     <input
                       type="email"
                       value={email}
+                      onKeyDown={() => playSfx("type")}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@somewhere"
                       autoComplete="email"
@@ -313,6 +321,7 @@ export function Bench() {
                         key={m.label}
                         type="button"
                         className={`mode${mode === m.id ? " is-on" : ""}`}
+                        data-sfx="switch"
                         aria-pressed={mode === m.id}
                         onClick={() => {
                           setMode(m.id);
@@ -331,6 +340,7 @@ export function Bench() {
                   <span className="field__label mono">What are we making?</span>
                   <textarea
                     value={message}
+                    onKeyDown={() => playSfx("type")}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={4}
                     placeholder="A sentence is enough. The hunch, the snag, the feeling you want in the room."
@@ -341,7 +351,7 @@ export function Bench() {
                   <div className="attached">
                     <span className="attached__label mono">Attached / patch sheet</span>
                     <pre>{patch}</pre>
-                    <button type="button" className="attached__x" onClick={() => setPatch("")} aria-label="Remove attached patch">
+                    <button type="button" className="attached__x" data-sfx="paper" onClick={() => setPatch("")} aria-label="Remove attached patch">
                       ✕
                     </button>
                   </div>

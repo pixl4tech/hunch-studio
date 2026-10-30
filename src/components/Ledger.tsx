@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useVibe } from "../lib/vibe";
 import { scrollTo } from "../lib/scroll";
+import { playSfx } from "../lib/sfx";
 
 type Ticket = {
   id: "sprint" | "build" | "date";
@@ -163,8 +164,13 @@ export function Ledger() {
                 <article
                   key={t.id}
                   className={`ticket${isSelected ? " is-selected" : ""}`}
+                  data-sfx="tear"
                   style={{ "--tilt": `${t.tilt}deg`, "--drop": `${t.drop}px` } as CSSProperties}
-                  onClick={() => setTier(isSelected ? null : t.id)}
+                  onClick={() => {
+                    setTier(isSelected ? null : t.id);
+                    if (isSelected) playSfx("paper");
+                    else window.setTimeout(() => playSfx("stamp"), 190);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
@@ -237,6 +243,7 @@ export function Ledger() {
                 <button
                   type="button"
                   className="btn btn--fill btn--sm"
+                  data-sfx="page"
                   onClick={() => scrollTo("#bench")}
                 >
                   Take this ticket <span className="arw">↗</span>

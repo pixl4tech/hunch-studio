@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { onTick } from "../lib/ticker";
 import { scrollTo } from "../lib/scroll";
 import { clamp } from "../lib/util";
+import { playSfx } from "../lib/sfx";
 
 const EMAIL = "hello@hunch.studio";
 
@@ -69,7 +70,7 @@ export function SignOff() {
           <span className="mono signoff__issue">Issue 03 · 500 copies · of which one is online</span>
         </div>
 
-        <div className="signoff__mark" ref={markRef} data-cursor="MISPRINT">
+        <div className="signoff__mark" ref={markRef} data-cursor="MISPRINT" onPointerEnter={() => playSfx("ink")}>
           <span className="signoff__layer signoff__layer--blue" aria-hidden="true">
             HUNCH
           </span>
@@ -87,13 +88,13 @@ export function SignOff() {
             That’s the issue. <em>The studio is still open.</em>
           </p>
           <div className="signoff__actions">
-            <a className="btn btn--fill signoff__mail" href={`mailto:${EMAIL}`}>
+            <a className="btn btn--fill signoff__mail" data-sfx="paper" href={`mailto:${EMAIL}`}>
               Tell us a hunch <span className="arw">↗</span>
             </a>
-            <button type="button" className="btn btn--ghost" onClick={copy}>
+            <button type="button" className="btn btn--ghost" data-sfx="success" onClick={copy}>
               {copied ? "Address copied ✓" : "Copy the address"}
             </button>
-            <button type="button" className="btn btn--ghost" onClick={() => scrollTo("#signal", -10)}>
+            <button type="button" className="btn btn--ghost" data-sfx="page" onClick={() => scrollTo("#signal", -10)}>
               Back to the cover <span className="arw">↑</span>
             </button>
           </div>
@@ -125,6 +126,10 @@ export function SignOff() {
             Set in Bricolage Grotesque, Instrument Serif and JetBrains Mono. Built in a browser, by
             hand, on a laptop, on a train. No templates were harmed. The cursor is custom. So is the
             rest.
+          </p>
+          <p className="signoff__model mono">
+            Made on DeepSeek V4.1 Flash 1017<br />
+            maya-deepseek/deepseek-v4.1-flash · Maya-S · reasoning max
           </p>
         </div>
         <div className="signoff__col">
@@ -180,7 +185,7 @@ export function SignOff() {
           <p className="signoff__tiny mono">
             Row 4,001 — this is where the footer ends. You’re welcome.
           </p>
-          <button type="button" className="signoff__top-btn mono" onClick={() => scrollTo("#signal", -10)}>
+          <button type="button" className="signoff__top-btn mono" data-sfx="page" onClick={() => scrollTo("#signal", -10)}>
             ↑ Back to the cover
           </button>
         </div>
