@@ -102,7 +102,7 @@ export function Cursor() {
       lx += (x - lx) * 0.17;
       ly += (y - ly) * 0.17;
       paint();
-      if (!active && Math.abs(x - lx) < 0.08 && Math.abs(y - ly) < 0.08) {
+      if (Math.abs(x - lx) < 0.08 && Math.abs(y - ly) < 0.08) {
         lx = x;
         ly = y;
         paint();
