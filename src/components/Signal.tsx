@@ -15,33 +15,45 @@ function Seismograph() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     let dpr = 1;
+    let w = 0;
+    let h = 0;
     const resize = () => {
-      dpr = Math.min(2, window.devicePixelRatio || 1);
+      dpr = Math.min(1.5, window.devicePixelRatio || 1);
       const r = canvas.getBoundingClientRect();
-      canvas.width = Math.max(1, Math.floor(r.width * dpr));
-      canvas.height = Math.max(1, Math.floor(r.height * dpr));
+      w = r.width;
+      h = r.height;
+      canvas.width = Math.max(1, Math.floor(w * dpr));
+      canvas.height = Math.max(1, Math.floor(h * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
+    let visible = true;
+    const io = new IntersectionObserver((entries) => {
+      visible = entries[0]?.isIntersecting ?? true;
+      if (visible) lastScroll = window.scrollY;
+    });
+    io.observe(canvas);
+
     let phase = 0;
     let lastScroll = window.scrollY;
     let energy = 0;
     let prevX = 0;
     let prevY = 0;
+    let lastDraw = 0;
 
-    const stop = onTick((_t, dt) => {
+    const stop = onTick((t, dt) => {
+      if (!visible || w === 0) return;
+      // A small instrument does not need 60 fps; 30 is indistinguishable here.
+      if (t - lastDraw < 1 / 30) return;
+      lastDraw = t;
       const sy = window.scrollY;
       const v = Math.abs(sy - lastScroll);
       lastScroll = sy;
       energy += (v - energy) * 0.12;
       phase += dt * 3.4;
-      const r = canvas.getBoundingClientRect();
-      const w = r.width;
-      const h = r.height;
-      if (w === 0) return;
       const amp = 1.1 + Math.min(11, energy * 0.55);
       ctx.clearRect(0, 0, w, h);
       ctx.lineWidth = 1;
@@ -78,6 +90,7 @@ function Seismograph() {
     return () => {
       stop();
       ro.disconnect();
+      io.disconnect();
     };
   }, []);
   return <canvas className="seismo" ref={ref} aria-hidden="true" />;

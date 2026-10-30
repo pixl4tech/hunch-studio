@@ -20,7 +20,13 @@ export function SignOff() {
     let x = 0;
     let y = 0;
     let active = false;
+    let visible = true;
+    const io = new IntersectionObserver((entries) => {
+      visible = entries[0]?.isIntersecting ?? true;
+    });
+    io.observe(el);
     const onMove = (e: PointerEvent) => {
+      if (!visible) return;
       const r = el.getBoundingClientRect();
       tx = clamp(((e.clientX - r.left) / r.width - 0.5) * 2, -1.2, 1.2);
       ty = clamp(((e.clientY - r.top) / r.height - 0.5) * 2, -1.2, 1.2);
@@ -32,6 +38,7 @@ export function SignOff() {
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerleave", onLeave);
     const stop = onTick((_t, dt) => {
+      if (!visible) return;
       const k = 1 - Math.pow(0.002, dt);
       const goalX = active ? tx : 0;
       const goalY = active ? ty : 0;
@@ -42,6 +49,7 @@ export function SignOff() {
     });
     return () => {
       stop();
+      io.disconnect();
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerleave", onLeave);
     };

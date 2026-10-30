@@ -57,6 +57,7 @@ export function Cursor() {
     const onMove = (e: PointerEvent) => {
       x = e.clientX;
       y = e.clientY;
+      ensure();
       if (!el.hasAttribute("data-ready")) el.setAttribute("data-ready", "true");
     };
     const onOver = (e: PointerEvent) => {
@@ -73,10 +74,12 @@ export function Cursor() {
     const onDown = () => {
       active = true;
       el.setAttribute("data-active", "true");
+      ensure();
     };
     const onUp = () => {
       active = false;
       el.removeAttribute("data-active");
+      ensure();
     };
 
     window.addEventListener("pointermove", onMove, { passive: true });
@@ -86,19 +89,34 @@ export function Cursor() {
     window.addEventListener("pointerleave", onUp);
 
     const ring = el.querySelector<HTMLElement>(".cursor__ring");
+    let stopTick: (() => void) | null = null;
 
-    const stop = onTick(() => {
-      lx += (x - lx) * 0.17;
-      ly += (y - ly) * 0.17;
+    const paint = () => {
       el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
       if (ring) {
         const s = active ? 1.5 : 1;
         ring.style.transform = `translate3d(${lx - x}px, ${ly - y}px, 0) scale(${s})`;
       }
-    });
+    };
+    const tick = () => {
+      lx += (x - lx) * 0.17;
+      ly += (y - ly) * 0.17;
+      paint();
+      if (!active && Math.abs(x - lx) < 0.08 && Math.abs(y - ly) < 0.08) {
+        lx = x;
+        ly = y;
+        paint();
+        stopTick?.();
+        stopTick = null;
+      }
+    };
+    const ensure = () => {
+      if (!stopTick) stopTick = onTick(tick);
+    };
 
     return () => {
-      stop();
+      stopTick?.();
+      stopTick = null;
       document.documentElement.classList.remove("cursor-on");
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerover", onOver);
@@ -134,14 +152,16 @@ export function InkTrail({ enabled }: { enabled: boolean }) {
     if (!ctx) return;
     if (!window.matchMedia("(pointer: fine)").matches) return;
 
-    let dpr = Math.min(2, window.devicePixelRatio || 1);
+    let dpr = Math.min(1.5, window.devicePixelRatio || 1);
     const resize = () => {
-      dpr = Math.min(2, window.devicePixelRatio || 1);
+      dpr = Math.min(1.5, window.devicePixelRatio || 1);
       canvas.width = Math.floor(window.innerWidth * dpr);
       canvas.height = Math.floor(window.innerHeight * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
+    // No transparent full-screen canvas while idle: show it only when ink exists.
+    canvas.style.display = "none";
     window.addEventListener("resize", resize);
 
     const pts: InkPoint[] = [];
@@ -149,11 +169,68 @@ export function InkTrail({ enabled }: { enabled: boolean }) {
     let py = 0;
     let lastMove = 0;
     let lastDraw = 0;
+    let lastInk = 0;
+    let stopTick: (() => void) | null = null;
+
+    const clear = () => {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      pts.length = 0;
+      canvas.style.display = "none";
+    };
+
+    const ensureLoop = () => {
+      if (stopTick) return;
+      canvas.style.display = "block";
+      const tick = (t: number) => {
+        // Dissolve gradually; the hard clear below guarantees no ghost layer.
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "rgba(0,0,0,0.035)";
+        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+        ctx.globalCompositeOperation = "source-over";
+
+        if (pts.length >= 2 && t - lastDraw > 0.012) {
+          lastDraw = t;
+          for (let i = Math.max(1, pts.length - 10); i < pts.length; i++) {
+            const a = pts[i - 1];
+            const b = pts[i];
+            ctx.strokeStyle = b.hue ? "rgba(34,56,245,0.42)" : "rgba(255,77,24,0.5)";
+            ctx.lineWidth = b.w * 0.55;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+            if (Math.random() < 0.05) {
+              ctx.fillStyle = b.hue ? "rgba(34,56,245,0.35)" : "rgba(255,77,24,0.4)";
+              ctx.beginPath();
+              ctx.arc(
+                b.x + (Math.random() - 0.5) * b.w,
+                b.y + (Math.random() - 0.5) * b.w,
+                Math.random() * 2.4 + 0.5,
+                0,
+                Math.PI * 2,
+              );
+              ctx.fill();
+            }
+          }
+        }
+
+        // 12 s after the last stroke: remove the layer completely and stop.
+        if (t * 1000 - lastInk > 12_000) {
+          clear();
+          stopTick?.();
+          stopTick = null;
+        }
+      };
+      stopTick = onTick(tick);
+    };
 
     const onMove = (e: PointerEvent) => {
       const now = performance.now();
       if (now - lastMove < 8) return;
       lastMove = now;
+      lastInk = now;
+      ensureLoop();
       const dx = e.clientX - px;
       const dy = e.clientY - py;
       const speed = Math.hypot(dx, dy);
@@ -169,42 +246,12 @@ export function InkTrail({ enabled }: { enabled: boolean }) {
     };
     window.addEventListener("pointermove", onMove, { passive: true });
 
-    const stop = onTick((t) => {
-      // dissolve
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.fillStyle = "rgba(0,0,0,0.075)";
-      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-      ctx.globalCompositeOperation = "source-over";
-
-      if (pts.length < 2) return;
-      // draw newest segments once, then let them dissolve
-      if (t - lastDraw > 0.012) {
-        lastDraw = t;
-        for (let i = Math.max(1, pts.length - 10); i < pts.length; i++) {
-          const a = pts[i - 1];
-          const b = pts[i];
-          ctx.strokeStyle = b.hue ? "rgba(34,56,245,0.42)" : "rgba(255,77,24,0.5)";
-          ctx.lineWidth = b.w * 0.55;
-          ctx.lineCap = "round";
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
-          // splatter
-          if (Math.random() < 0.05) {
-            ctx.fillStyle = b.hue ? "rgba(34,56,245,0.35)" : "rgba(255,77,24,0.4)";
-            ctx.beginPath();
-            ctx.arc(b.x + (Math.random() - 0.5) * b.w, b.y + (Math.random() - 0.5) * b.w, Math.random() * 2.4 + 0.5, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-      }
-    });
-
     return () => {
-      stop();
-      window.removeEventListener("resize", resize);
+      stopTick?.();
+      stopTick = null;
+      clear();
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("resize", resize);
     };
   }, [enabled]);
 

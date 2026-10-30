@@ -255,7 +255,10 @@ export function Organism() {
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 40);
     camera.position.set(0, 0.12, 5.7);
 
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    // The halftone shader is fragment-heavy; 1.5× is visually identical at
+    // this scale and cuts GPU work by ~45 % on retina screens.
+    const dprCap = window.innerWidth < 720 ? 1.25 : 1.5;
+    renderer.setPixelRatio(Math.min(dprCap, window.devicePixelRatio || 1));
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.setAttribute("aria-hidden", "true");
     mount.appendChild(renderer.domElement);
