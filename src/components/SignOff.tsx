@@ -127,7 +127,7 @@ export function SignOff() {
             hand, on a laptop, on a train. No templates were harmed. The cursor is custom. So is the
             rest.
           </p>
-          <p className="signoff__model mono">
+          <p className="signoff__sm signoff__model">
             Made on DeepSeek V4.1 Flash 1017<br />
             maya-deepseek/deepseek-v4.1-flash · Maya-S · reasoning max<br />
             1,272,527 tokens read · 818,340 written · 89.6M reused

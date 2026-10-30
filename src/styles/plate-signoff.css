@@ -176,15 +176,7 @@
   color: var(--bone);
 }
 .signoff__model {
-  margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--rule);
-  font-size: 7.5px;
-  line-height: 1.8;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--lime);
-  opacity: 0.85;
+  margin-top: 12px;
 }
 .signoff__col .signoff__sm {
   font-family: var(--mono);
