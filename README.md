@@ -2,6 +2,8 @@
 
 A site for a fictional two-desk **vibe-code studio**. Built as a printed studio zine — *Issue 03, The Feeling Issue* — instead of a hero / features / pricing / footer template.
 
+**[Live site →](https://hunch-studio-eight.vercel.app)** · **[GitHub](https://github.com/pixl4tech/hunch-studio)**
+
 ![HUNCH](public/og.png)
 
 ## The idea
